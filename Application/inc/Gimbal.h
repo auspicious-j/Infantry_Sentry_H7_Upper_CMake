@@ -60,7 +60,8 @@ typedef struct
       float angle, lastAngle; // pitch
       float gyro;
       float targetAngle, lastTargetAngle;
-      float pitchMax, pitchMin; // 限幅
+      float pitchMax, pitchMin; // 限幅 (绝对角度)
+      float relativePitchMax, relativePitchMin; // 相对角度限幅 (相对于fold_pitch)
       CascadePID imuPID;        // pitch陀螺仪pid
     } top_pitch;
 
@@ -70,7 +71,7 @@ typedef struct
       float angle, lastAngle; // pitch
       float gyro;
       float targetAngle, lastTargetAngle;
-      float pitchMax, pitchMin; // 限幅
+      float pitchMax, pitchMin; // 限幅 (绝对角度)
       CascadePID imuPID;        // pitch陀螺仪pid
     } fold_pitch;
 

@@ -12,6 +12,7 @@
 #define TOP_YAW_LIMIT 45.0f
 #define BASE_YAW_J 0.04575f
 
+
 Gimbal_t gimbal;
 
 void Gimbal_InitPID(void);
@@ -20,8 +21,11 @@ void Gimbal_InitPID(void);
 // 初始化云台
 void Gimbal_Init()
 {
-	gimbal.top_pitch.pitchMax = 60; // 设定pitch角度限幅
+	gimbal.top_pitch.pitchMax = 60; // 设定pitch角度限幅 (绝对角度) (目前没有用到 小pitch限位由大小pitch的相对角度来决定)
 	gimbal.top_pitch.pitchMin = 10;
+
+	gimbal.top_pitch.relativePitchMax = 30; // 相对角度限幅 (相对于fold_pitch)
+	gimbal.top_pitch.relativePitchMin = -30;
 
 	gimbal.top_pitch.initAngle = 30; // 陀螺仪pitch开机角度 *0表示pitch水平
 	gimbal.top_pitch.targetAngle = gimbal.top_pitch.initAngle;
@@ -79,7 +83,7 @@ void Gimbal_UpdateAngle()
 	gimbal.top_pitch.gyro = -INS.gyro[0];
 	gimbal.top_pitch.angle = INS.pitch;
 	gimbal.fold_pitch.angle = gimbal.top_pitch.angle + (gimbal.top_pitchMotor.para.pos - TOP_PITCH_OFFSET) / PI * 180.0f + 90.0f;//根据顶上pitch的imu角度和电机编码器值得出折叠pitch的imu角度
-	gimbal.fold_pitch.gyro = gimbal.fold_pitchMotor.para.vel; 
+	gimbal.fold_pitch.gyro = gimbal.fold_pitchMotor.para.vel;
 	
 	//pitch角度归一化到-180~180度
 	while (gimbal.fold_pitch.angle > 180.0f)
@@ -227,7 +231,12 @@ void Gimbal_RockerCtrl()
 	gimbal.top_yaw.targetAngle -= rcInfo.ch1 * 0.3 / 660.0f;	// yaw
 	gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 	gimbal.top_pitch.targetAngle += rcInfo.ch2 * 0.35 / 660.0f; // 旋转云台pitch
-	LIMIT(gimbal.top_pitch.targetAngle, gimbal.top_pitch.pitchMin, gimbal.top_pitch.pitchMax);
+	// 小pitch限位：相对于fold_pitch的相对角度限制
+	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
+	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
+	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
+	// 大pitch限位：绝对角度限制 (使用动态最小角度)
+	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);
 }
 
 void Gimbal_FoldCtrl()
@@ -259,7 +268,12 @@ void Gimbal_VisionCtrl()
 	LIMIT(delta,-TOP_YAW_LIMIT,TOP_YAW_LIMIT);//delta限幅
 	gimbal.top_yaw.targetAngle = gimbal.base_yaw.totalAngle + delta;
 	gimbal.top_pitch.targetAngle = vision.pitch;
-    LIMIT(gimbal.top_pitch.targetAngle,gimbal.top_pitch.pitchMin,gimbal.top_pitch.pitchMax);
+    // 小pitch限位：相对于fold_pitch的相对角度限制
+    float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
+    LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
+    gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
+    // 大pitch限位：绝对角度限制 (目前仍存在问题 底盘上坡时如果折叠pitch处于最低,上坡时底盘会和大pitch打架)
+    LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);
 }
 
 void Gimbal_ScanCtrl()
