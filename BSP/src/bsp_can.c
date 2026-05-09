@@ -104,18 +104,18 @@ void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 {
 	uint8_t whichMotor;
 	switch(rx_header->Identifier)
-	{
-		//驱动电机
+	{		
 		case 0x201:
-		case 0x202:
-        {
-			whichMotor = rx_header->Identifier - 0x201;
-			DJIMotor_Update(&shooter.fricMotor[whichMotor], (rxdata[0]<<8 | rxdata[1]), (rxdata[2]<<8 | rxdata[3]),(rxdata[4]<<8|rxdata[5]),rxdata[6]);
-			break;
-		}
-		case 0x203:
 		{
 			DJIMotor_Update(&shooter.triggerMotor, (rxdata[0] << 8 | rxdata[1]), (rxdata[2] << 8 | rxdata[3]), (rxdata[4] << 8 | rxdata[5]), rxdata[6]);
+			break;
+		}
+		//驱动电机
+		case 0x202:
+		case 0x203:
+        {
+			whichMotor = rx_header->Identifier - 0x202;
+			DJIMotor_Update(&shooter.fricMotor[whichMotor], (rxdata[0]<<8 | rxdata[1]), (rxdata[2]<<8 | rxdata[3]),(rxdata[4]<<8|rxdata[5]),rxdata[6]);
 			break;
 		}
 		//未知信息

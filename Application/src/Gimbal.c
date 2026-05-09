@@ -24,14 +24,14 @@ void Gimbal_Init()
 	gimbal.top_pitch.pitchMax = 60; // 设定pitch角度限幅 (绝对角度) (目前没有用到 小pitch限位由大小pitch的相对角度来决定)
 	gimbal.top_pitch.pitchMin = 10;
 
-	gimbal.top_pitch.relativePitchMax = 30; // 相对角度限幅 (相对于fold_pitch)
-	gimbal.top_pitch.relativePitchMin = -30;
+	gimbal.top_pitch.relativePitchMax = -30; // 相对角度限幅 (相对于fold_pitch)
+	gimbal.top_pitch.relativePitchMin = -100;// 在gimbal_updateangle函数中根据fold_pitch的角度动态更新相对角度限幅
 
-	gimbal.top_pitch.initAngle = 30; // 陀螺仪pitch开机角度 *0表示pitch水平
+	gimbal.top_pitch.initAngle = 0; // 陀螺仪pitch开机角度 *0表示pitch水平
 	gimbal.top_pitch.targetAngle = gimbal.top_pitch.initAngle;
 
-	gimbal.fold_pitch.pitchMax = 100;
-	gimbal.fold_pitch.pitchMin = 20;
+	gimbal.fold_pitch.pitchMax = 92;
+	gimbal.fold_pitch.pitchMin = 5;
 
 	gimbal.fold_pitch.initAngle = 90;
 	gimbal.fold_pitch.targetAngle = gimbal.fold_pitch.initAngle;
@@ -90,6 +90,27 @@ void Gimbal_UpdateAngle()
 		gimbal.fold_pitch.angle -= 360.0f;
 	while (gimbal.fold_pitch.angle < -180.0f)
 		gimbal.fold_pitch.angle += 360.0f;
+
+	//更新top_pitch限幅 根据fold_pitch角度动态限幅
+	if (gimbal.fold_pitch.angle >= 70.0f && gimbal.fold_pitch.angle <= 95.0f)
+	{
+		// fold_pitch角度在95-70度之间时，相对角度限幅为 -20到-110度
+		gimbal.top_pitch.relativePitchMax = -30.0f;
+		gimbal.top_pitch.relativePitchMin = -110.0f;
+	}
+	else if (gimbal.fold_pitch.angle >= 0.0f && gimbal.fold_pitch.angle < 70.0f)
+	{
+		// fold_pitch角度在70-0度之间时，映射相对角度限幅从0到-110度映射到从0到0度
+		// 线性插值：relativePitchMin = -1.5 * fold_pitch_angle
+		gimbal.top_pitch.relativePitchMax = 0.0f;
+		gimbal.top_pitch.relativePitchMin = -1.5f * gimbal.fold_pitch.angle;
+	}
+	else
+	{
+		// 其他角度范围，使用默认值
+		gimbal.top_pitch.relativePitchMax = -30.0f;
+		gimbal.top_pitch.relativePitchMin = -5.0f;
+	}
 
 	// yaw角度累计
 	float dAngle = 0;
@@ -192,6 +213,12 @@ static void Gimbal_HandleRocker(void)
 	Gimbal_RockerCtrl();
 }
 
+static void Gimbal_HandleFold(void)
+{
+	gimbal.visionEnable = false;
+	Gimbal_FoldCtrl();
+}
+
 static void Gimbal_HandleVision(void)
 {
 	gimbal.visionEnable = true;
@@ -218,11 +245,7 @@ static void Gimbal_HandleScan(void)
         Gimbal_ScanCtrl();
     }
 }
-static void Gimbal_HandleFold(void)
-{
-	gimbal.visionEnable = false;
-	Gimbal_FoldCtrl();
-}
+
 
 
 /*******三种控制函数*********/
@@ -235,7 +258,7 @@ void Gimbal_RockerCtrl()
 	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
 	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
 	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
-	// 大pitch限位：绝对角度限制 (使用动态最小角度)
+	// 大pitch限位：绝对角度限制
 	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);
 }
 
@@ -243,8 +266,12 @@ void Gimbal_FoldCtrl()
 {
 	gimbal.top_yaw.targetAngle -= rcInfo.ch1 * 0.3 / 660.0f;	// yaw
 	gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
-	gimbal.fold_pitch.targetAngle += rcInfo.ch2 * 0.35 / 660.0f; // 旋转云台pitch
-	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);
+	gimbal.fold_pitch.targetAngle += rcInfo.ch2 * 0.2 / 660.0f; // 旋转云台pitch
+	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);//折叠pitch限位
+	// 小pitch限位：根据当前fold_pitch角度动态调整top_pitch的相对角度限幅
+	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
+	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
+	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
 }
 
 void Gimbal_VisionCtrl()
