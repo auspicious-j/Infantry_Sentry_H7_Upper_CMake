@@ -9,8 +9,10 @@
 #include "Filter.h"
 
 #define TOP_YAW_OFFSET 7869  //此处校准小yaw
-#define INIT_YAW_ANGLE -33.0f   //此处校准大yaw
-#define TOP_PITCH_OFFSET -2.16f //此处校准pitch
+#define INIT_YAW_ANGLE -120.0f   //此处校准大yaw
+#define TOP_PITCH_OFFSET -1.08919096f //此处校准pitch
+#define FOLD_PITCH_OFFSET 0.0f //此处校准fold_pitch
+// #define FOLD_PITCH_OFFSET 1.53913379f //此处校准fold_pitch
 
 #define PITCH_DIRECTION -1
 #define MASS_G 9.81f
@@ -68,7 +70,8 @@ typedef struct
     struct
     {
       float initAngle;
-      float angle, lastAngle; // pitch
+      float IMU_angle;        // pitch的陀螺仪角度 由top_pitch的编码器角度计算得出
+      float angle, lastAngle; // pitch的机械角度 由编码器加校准得出
       float gyro;
       float targetAngle, lastTargetAngle;
       float pitchMax, pitchMin; // 限幅 (绝对角度)

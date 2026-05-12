@@ -1,5 +1,5 @@
 #include "USER_Moto.h"
-
+#include "math.h"
 
 /********************积累DJI电机累计角度************************/
 void Motor_StartCalcAngle(DJI_Motor_t *motor)
@@ -62,7 +62,7 @@ void dm4310_fbdata(DM_motor_t *motor, uint8_t *rx_data)//大喵4310数据更新
 	  motor->para.tor = uint_to_float(motor->para.t_int, T_MIN, T_MAX, 12);  // (-10.0,10.0)
 	  motor->para.Tmos = (float)(rx_data[6]);
 	  motor->para.Tcoil = (float)(rx_data[7]);
-	  motor->nowAngle = (float)motor->para.p_int / 65535.0f * 360.0f;
+      motor->nowAngle = (float)motor->para.pos / M_PI * 180.0f;
 }
 
 void dm4340_fbdata(DM_motor_t *motor, uint8_t *rx_data)//大喵4340数据更新
@@ -77,7 +77,7 @@ void dm4340_fbdata(DM_motor_t *motor, uint8_t *rx_data)//大喵4340数据更新
 	  motor->para.tor = uint_to_float(motor->para.t_int, T_MIN, T_MAX, 12);  // (-10.0,10.0)
 	  motor->para.Tmos = (float)(rx_data[6]);
 	  motor->para.Tcoil = (float)(rx_data[7]);
-      motor->nowAngle = (float)motor->para.p_int / 65535.0f * 360.0f;
+      motor->nowAngle = (float)motor->para.pos / M_PI * 180.0f;
 }
 
 void enable_motor_mode(FDCAN_HandleTypeDef* hcan, uint16_t motor_id, uint16_t mode_id) //大喵电机使能

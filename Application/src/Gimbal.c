@@ -30,7 +30,7 @@ void Gimbal_Init()
 	gimbal.top_pitch.initAngle = 0; // 陀螺仪pitch开机角度 *0表示pitch水平
 	gimbal.top_pitch.targetAngle = gimbal.top_pitch.initAngle;
 
-	gimbal.fold_pitch.pitchMax = 92;
+	gimbal.fold_pitch.pitchMax = 90;
 	gimbal.fold_pitch.pitchMin = 5;
 
 	gimbal.fold_pitch.initAngle = 90;
@@ -82,7 +82,8 @@ void Gimbal_UpdateAngle()
 	gimbal.base_yaw.gyro = gimbal.base_yawMotor.para.vel;
 	gimbal.top_pitch.gyro = -INS.gyro[0];
 	gimbal.top_pitch.angle = INS.pitch;
-	gimbal.fold_pitch.angle = gimbal.top_pitch.angle + (gimbal.top_pitchMotor.para.pos - TOP_PITCH_OFFSET) / PI * 180.0f + 90.0f;//根据顶上pitch的imu角度和电机编码器值得出折叠pitch的imu角度
+	gimbal.fold_pitch.angle = gimbal.fold_pitchMotor.nowAngle - FOLD_PITCH_OFFSET / PI * 180.0f;//根据折叠pitch的电机编码器值控制
+	gimbal.fold_pitch.IMU_angle = gimbal.top_pitch.angle + (gimbal.top_pitchMotor.para.pos - TOP_PITCH_OFFSET) / PI * 180.0f + 90.0f;//根据顶上pitch的imu角度和电机编码器值得出折叠pitch的imu角度
 	gimbal.fold_pitch.gyro = gimbal.fold_pitchMotor.para.vel;
 	
 	//pitch角度归一化到-180~180度
@@ -255,11 +256,9 @@ void Gimbal_RockerCtrl()
 	gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 	gimbal.top_pitch.targetAngle += rcInfo.ch2 * 0.35 / 660.0f; // 旋转云台pitch
 	// 小pitch限位：相对于fold_pitch的相对角度限制
-	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
+	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.IMU_angle;
 	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
-	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
-	// 大pitch限位：绝对角度限制
-	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);
+	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.IMU_angle + relativeAngle;	// 大pitch限位：绝对角度限制
 }
 
 void Gimbal_FoldCtrl()
@@ -269,9 +268,9 @@ void Gimbal_FoldCtrl()
 	gimbal.fold_pitch.targetAngle += rcInfo.ch2 * 0.2 / 660.0f; // 旋转云台pitch
 	LIMIT(gimbal.fold_pitch.targetAngle, gimbal.fold_pitch.pitchMin, gimbal.fold_pitch.pitchMax);//折叠pitch限位
 	// 小pitch限位：根据当前fold_pitch角度动态调整top_pitch的相对角度限幅
-	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.targetAngle;
+	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.IMU_angle;
 	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
-	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.targetAngle + relativeAngle;
+	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.IMU_angle + relativeAngle;  //翻译一下就是限幅过的relative angle
 }
 
 void Gimbal_VisionCtrl()

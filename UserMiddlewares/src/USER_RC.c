@@ -5,6 +5,7 @@
 #include "UserFreertos.h"
 #include "USER_Moto.h"
 #include "USER_B2B.h"
+#include "Crc.h"
 
 
 uint8_t usart5RxBuf[25]; // 串口5缓冲区
@@ -12,18 +13,35 @@ MC6C_RC_t rcInfo_MC6C = {0};//三个遥控器各自的接口
 DR16_RC_T rcInfo_DR16 = {0};
 ET08_RC_t rcInfo_ET08 = {0};
 
+uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
+Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
+
 RC_TypeDef rcInfo = {0};//统一接口
 
 int rc_true_flag;
 
+Image_Trans_TypeDef itInfo = {0}; // 图传链路信息
+
+int Image_Trans_error_times;
+uint16_t data_length;
+
 extern DMA_HandleTypeDef hdma_usart2_rx;
 extern DMA_HandleTypeDef hdma_uart5_rx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 
+// 初始化所有按键
+void RC_InitKeys(void);
+// 更新按键信息
+void RC_UpdateKeys(void);
 
 void RC_Init()
 {
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 	__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
+
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart1, Usart1RxBuf, sizeof(Usart1RxBuf));
+	__HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
+	RC_InitKeys(); // 初始化按键
 }
 
 SwitchState SBUS_SwitchState(int16_t ch)
@@ -228,6 +246,67 @@ void ET08_ToUnified(ET08_RC_t *rc_ET08, RC_TypeDef *rc)
 	rc->lost = rc_ET08->lost;
 }
 
+
+void judge(uint8_t *buff)
+{
+	if(buff[0] == 0xA5)
+	{
+		if(Verify_CRC8_Check_Sum(buff,5))
+		{
+			data_length = (buff[1] | buff[2] << 8);
+			buff = buff + 9 + data_length;
+			judge(buff);
+		}
+	}
+	else
+	{
+		return;
+	}
+	
+}
+
+void Image_Trans_Analysis(uint8_t *buff)
+{
+	
+	judge(buff);
+	
+	if(buff[0] == 0xA9 && buff[1] == 0x53)
+	{
+		if(Verify_CRC16_Check_Sum(buff,21))
+		{
+			itInfo.ch1 = (buff[2] | buff[3] << 8) & 0x07FF;
+			itInfo.ch1 -= 1024;
+			itInfo.ch2 = (buff[3] >> 3 | buff[4] << 5) & 0x07FF;
+			itInfo.ch2 -= 1024;
+			itInfo.ch3 = (buff[4] >> 6 | buff[5] << 2 | buff[6] << 10) & 0x07FF;
+			itInfo.ch3 -= 1024;
+			itInfo.ch4 = (buff[6] >> 1 | buff[7] << 7) & 0x07FF;
+			itInfo.ch4 -= 1024;
+			itInfo.wheel = (buff[8] >> 1 | buff[9] << 7) & 0x07FF;
+			itInfo.wheel -= 1024;
+			
+			itInfo.sw = (buff[7] >> 4) & 0x03;
+			itInfo.pause = (buff[7] >> 6) & 0x01;
+			itInfo.left = (buff[7] >> 7) & 0x01;
+			itInfo.right = (buff[8] >> 0) & 0x01;
+			itInfo.trigger = (buff[9] >> 4) & 0x01;
+			
+			itInfo.mouse.x = (buff[10] | buff[11] << 8);
+			itInfo.mouse.y = buff[12] | (buff[13] << 8);
+			itInfo.mouse.z = buff[14] | (buff[15] << 8);
+			itInfo.mouse.left = buff[16] & 0x03;
+			itInfo.mouse.right = (buff[16] >> 2) & 0x03;
+			itInfo.mouse.middle = (buff[16] >> 4) & 0x03;
+			
+			itInfo.kb.key_code = (buff[17] | buff[18] << 8);
+		}
+		else
+		{
+			Image_Trans_error_times++;
+		}
+	}
+}
+
 // 串口5空闲中断回调
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
@@ -251,10 +330,182 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 		__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
 	}
+		if (huart == &huart1)
+	{
+		Image_Trans_Analysis(Usart1RxBuf);
+	}
+}
+
+// 注册一个按键回调
+void RC_Register(uint32_t key, KeyCombineType combine, KeyEventType event, KeyCallbackFunc func)
+{
+	// 寻找要操作的按键
+	for (uint8_t index = 0; index < KEY_NUM; index++)
+	{
+		if (key & (0x01 << index))
+		{
+			// 根据按键事件注册回调
+			switch (event)
+			{
+			case KeyEvent_OnClick:
+				keyList[index].onClickCb.combineKey[keyList[index].onClickCb.number] = combine;
+				keyList[index].onClickCb.func[keyList[index].onClickCb.number] = func;
+				keyList[index].onClickCb.number++;
+				break;
+			case KeyEvent_OnLongPress:
+				keyList[index].onLongCb.combineKey[keyList[index].onLongCb.number] = combine;
+				keyList[index].onLongCb.func[keyList[index].onLongCb.number] = func;
+				keyList[index].onLongCb.number++;
+				break;
+			case KeyEvent_OnDown:
+				keyList[index].onDownCb.combineKey[keyList[index].onDownCb.number] = combine;
+				keyList[index].onDownCb.func[keyList[index].onDownCb.number] = func;
+				keyList[index].onDownCb.number++;
+				break;
+			case KeyEvent_OnUp:
+				keyList[index].onUpCb.combineKey[keyList[index].onUpCb.number] = combine;
+				keyList[index].onUpCb.func[keyList[index].onUpCb.number] = func;
+				keyList[index].onUpCb.number++;
+				break;
+			case KeyEvent_OnPressing:
+				keyList[index].onPressCb.combineKey[keyList[index].onPressCb.number] = combine;
+				keyList[index].onPressCb.func[keyList[index].onPressCb.number] = func;
+				keyList[index].onPressCb.number++;
+				break;
+			}
+		}
+	}
+}
+
+// 初始化一个按键的判定时间(键位ID，单击判定时间，长按判定时间)
+void RC_InitKeyJudgeTime(uint32_t key, uint16_t clickDelay, uint16_t longPressDelay)
+{
+	for (uint8_t i = 0; i < 18; i++)
+	{
+		if (key & (0x01 << i))
+		{
+			keyList[i].clickDelayTime = clickDelay;
+			keyList[i].longPressTime = longPressDelay;
+		}
+	}
+}
+
+// 初始化所有按键
+void RC_InitKeys()
+{
+	RC_InitKeyJudgeTime(Key_All, 50, 200);
+}
+
+// 更新按键状态
+void RC_UpdateKeys(void)
+{
+	static uint32_t lastUpdateTime;
+	uint32_t presentTime = HAL_GetTick();
+
+	// 检查组合键
+	KeyCombineType combineKey = CombineKey_None;
+	if (rcInfo.kb.bit.CTRL)
+		combineKey = CombineKey_Ctrl;
+	else if (rcInfo.kb.bit.SHIFT)
+		combineKey = CombineKey_Shift;
+
+	for (uint8_t key = 0; key < 18; key++)
+	{
+		// 读取按键状态
+		uint8_t thisState = 0;
+		if (key < 16)
+			thisState = (rcInfo.kb.key_code & (0x01 << key)) ? 1 : 0; // 取出键盘对应位
+		else if (key == 16)
+			thisState = rcInfo.mouse.l;
+		else if (key == 17)
+			thisState = rcInfo.mouse.r;
+
+		uint16_t lastPressTime = lastUpdateTime - keyList[key].startPressTime; // 上次更新时按下的时间
+		uint16_t pressTime = presentTime - keyList[key].startPressTime;		   // 当前按下的时间
+
+		// 按键状态判定
+		/*******按下的一瞬间********/
+		if (!keyList[key].lastState && thisState)
+		{
+			keyList[key].startPressTime = presentTime; // 记录按下时间
+			keyList[key].isPressing = 1;
+
+			// 依次执行回调
+			for (uint8_t i = 0; i < keyList[key].onDownCb.number; i++)
+				if (keyList[key].onDownCb.combineKey[i] == combineKey) // 符合组合键条件
+					keyList[key].onDownCb.func[i]((KeyType)(0x01 << key), combineKey, KeyEvent_OnDown);
+		}
+		/*******松开的一瞬间********/
+		else if (keyList[key].lastState && !thisState)
+		{
+			keyList[key].isLongPressed = 0;
+			keyList[key].isPressing = 0;
+
+			// 按键抬起
+			keyList[key].isUp = 1;
+			// 依次执行回调
+			for (uint8_t i = 0; i < keyList[key].onUpCb.number; i++)
+				if (keyList[key].onUpCb.combineKey[i] == combineKey) // 符合组合键条件
+					keyList[key].onUpCb.func[i]((KeyType)(0x01 << key), combineKey, KeyEvent_OnUp);
+
+			// 单击判定
+			if (pressTime > keyList[key].clickDelayTime && pressTime < keyList[key].longPressTime)
+			{
+				keyList[key].isClicked = 1;
+				// 依次执行回调
+				for (uint8_t i = 0; i < keyList[key].onClickCb.number; i++)
+					if (keyList[key].onClickCb.combineKey[i] == combineKey) // 符合组合键条件
+						keyList[key].onClickCb.func[i]((KeyType)(0x01 << key), combineKey, KeyEvent_OnClick);
+			}
+		}
+		/*******按键持续按下********/
+		else if (keyList[key].lastState && thisState)
+		{
+			// 执行一直按下的事件回调
+			for (uint8_t i = 0; i < keyList[key].onPressCb.number; i++)
+				if (keyList[key].onPressCb.combineKey[i] == combineKey) // 符合组合键条件
+					keyList[key].onPressCb.func[i]((KeyType)(0x01 << key), combineKey, KeyEvent_OnPressing);
+
+			// 长按判定
+			if (lastPressTime <= keyList[key].longPressTime && pressTime > keyList[key].longPressTime)
+			{
+				keyList[key].isLongPressed = 1;
+				// 依次执行回调
+				for (uint8_t i = 0; i < keyList[key].onLongCb.number; i++)
+					if (keyList[key].onLongCb.combineKey[i] == combineKey) // 符合组合键条件
+						keyList[key].onLongCb.func[i]((KeyType)(0x01 << key), combineKey, KeyEvent_OnLongPress);
+			}
+			else
+				keyList[key].isLongPressed = 0;
+		}
+		/*******按键持续松开********/
+		else
+		{
+			keyList[key].isClicked = 0;
+			keyList[key].isLongPressed = 0;
+			keyList[key].isUp = 0;
+		}
+
+		keyList[key].lastState = thisState; // 记录按键状态
+	}
+
+	lastUpdateTime = presentTime; // 记录更新事件
+}
+
+void Judge_UpdateKeys(void)
+{
+	rcInfo.kb.key_code = itInfo.kb.key_code;
+	rcInfo.mouse.l = itInfo.mouse.left;
+	rcInfo.mouse.r = itInfo.mouse.right;
+	rcInfo.mouse.x = itInfo.mouse.x;
+	rcInfo.mouse.y = itInfo.mouse.y;
+	rcInfo.mouse.z = itInfo.mouse.z;
 }
 
 void Task_RC_Callback()
 {
+	// 更新按键状态
+	RC_UpdateKeys();
 	/**********特殊情况处理*********************/
 	if (rcInfo.right == 2) // 遥控器右拨码开关向下，急停
 	{

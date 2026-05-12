@@ -57,6 +57,7 @@ const    uint16_t    wCRC_Table[256] = {
 	0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78 
 };
 
+
 // CRC8
 void Append_CRC8_Check_Sum( uint8_t *pchMessage, uint16_t dwLength);
 uint32_t Verify_CRC8_Check_Sum( uint8_t *pchMessage, uint16_t dwLength);
@@ -66,7 +67,6 @@ uint8_t Get_CRC8_Check_Sum( uint8_t *pchMessage, uint16_t dwLength, uint8_t ucCR
 void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength);
 uint32_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
 uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength,uint16_t wCRC);
-
 
 /* CRC校验 */
 

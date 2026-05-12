@@ -60,9 +60,9 @@ void INS_Task(void)
 
         if (attitude_flag == 2)
         {
-            gyro_correct[0] = -0.0013251846;
-            gyro_correct[1] = -0.00224610348;
-            gyro_correct[2] = 0.000502272975;
+            gyro_correct[0] = 0.00173073635;
+            gyro_correct[1] = 0.00388717884;
+            gyro_correct[2] = 0.00499085616;
 
             INS.gyro[0] -= gyro_correct[0];
             INS.gyro[1] -= gyro_correct[1];
