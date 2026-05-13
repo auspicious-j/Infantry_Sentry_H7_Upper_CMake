@@ -1,6 +1,7 @@
 #ifndef _GIMBAL_H_
 #define _GIMBAL_H_
 
+#include "USER_RC.h"
 #include "USER_Moto.h"
 #include "stdbool.h"
 #include "stdint.h"
@@ -96,6 +97,10 @@ typedef struct
     DM_motor_t fold_pitchMotor;
 
     struct{
+      AverFilter pitchFilter, yawFilter; // 鼠标数据均值滤波器
+      float pitchDPI, yawDPI;            // 调整鼠标DPI
+    } Mouse;
+    struct{
       AverFilter pitch,yaw,find;
     }visionFilter;//视觉数据均值滤波器
 
@@ -109,7 +114,8 @@ extern float p_target;
 void Gimbal_Init(void);
 void Gimbal_RockerCtrl();
 void Gimbal_VisionCtrl();
+void Gimbal_MouseCtrl();
 void Gimbal_ScanCtrl();
 void Gimbal_FoldCtrl();
-
+void Gimbal_Fold_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 #endif

@@ -5,7 +5,7 @@
 #include "stdbool.h"
 #include "Slope.h"
 #include "USER_Moto.h"
-
+#include "USER_RC.h"
 
 enum
 {
@@ -49,5 +49,10 @@ extern Shooter shooter;
 
 void Shooter_Init(void);
 void Shooter_state(_Bool openflag);
+void Shooter_RegisterEvents();
+void Shooter_SwitchState_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Shooter_StartFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Shooter_IncFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Shooter_DecFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 
 #endif

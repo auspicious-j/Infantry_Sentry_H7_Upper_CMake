@@ -1,12 +1,13 @@
 #include "Gimbal.h"
 #include "PID.h"
+#include "USER_RC.h"
 #include "gimbal.h"
 #include "imu_temp_ctrl.h"
-#include "USER_RC.h"
 #include "vision.h"
 #include "chassis.h"
 #include "shooter.h"
 #include "arm_math.h"
+#include <stdbool.h>
 
 #define DEG_TO_RAD 0.01745329f  // PI / 180
 #define TOP_YAW_LIMIT 45.0f
@@ -54,6 +55,7 @@ void Gimbal_Init()
 	gimbal.scan.last_ideal_pitch = 0.0f;
 	gimbal.scan.init_flag = 1;
 	Gimbal_InitPID();         // 初始化PID参数
+	Gimbal_RegisterEvents();
 }
 
 void Gimbal_InitPID()
@@ -67,7 +69,7 @@ void Gimbal_InitPID()
 
 	PID_Init(&gimbal.base_yaw.imuPID.inner,5.8,0.02,3.5,1000,7000);
 	DEPID_Init(&gimbal.base_yaw.imuPID.deOuter,37,0.03,173,700,2000,0.45);	//串级pid
-	PID_Init(&gimbal.base_yaw.imuPID.outer,300,0.5,5000,1000,50000);//自己写位置环 mit速度环
+	PID_Init(&gimbal.base_yaw.imuPID.outer,330,0.1,11000,1000,50000);//自己写位置环 mit速度环
 
 	PID_Init(&gimbal.top_yaw.imuPID.inner, 50, 0.1, 10, 7000, 30000);//270 0.3  300
 	DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 100, 0.4, 150, 100, 30000, 0.7);
@@ -99,12 +101,19 @@ void Gimbal_UpdateAngle()
 		gimbal.top_pitch.relativePitchMax = -30.0f;
 		gimbal.top_pitch.relativePitchMin = -110.0f;
 	}
-	else if (gimbal.fold_pitch.angle >= 0.0f && gimbal.fold_pitch.angle < 70.0f)
+	else if (gimbal.fold_pitch.angle >= 15.0f && gimbal.fold_pitch.angle < 70.0f)
 	{
 		// fold_pitch角度在70-0度之间时，映射相对角度限幅从0到-110度映射到从0到0度
 		// 线性插值：relativePitchMin = -1.5 * fold_pitch_angle
-		gimbal.top_pitch.relativePitchMax = 0.0f;
-		gimbal.top_pitch.relativePitchMin = -1.5f * gimbal.fold_pitch.angle;
+		gimbal.top_pitch.relativePitchMax = 5.0f;
+		gimbal.top_pitch.relativePitchMin = -1.5f * gimbal.fold_pitch.angle ;
+	}
+	else if (gimbal.fold_pitch.angle < 15.0f && gimbal.fold_pitch.angle >= -5.0f)
+	{
+		// fold_pitch角度在0到-15度之间时，映射相对角度限幅从0到-110度映射到从0到-30度
+		// 线性插值：relativePitchMin = -2 * fold_pitch_angle
+		gimbal.top_pitch.relativePitchMax = 5.0f;
+		gimbal.top_pitch.relativePitchMin = 4.9f;
 	}
 	else
 	{
@@ -152,13 +161,13 @@ void Gimbal_UpdatePID(void)
     switch(chassis.rotate.mode)
     {
         case ChassisMode_Spin:
-            // gimbal.base_yaw.imuPID.outer.maxIntegral = 6000;
-            // gimbal.base_yaw.imuPID.outer.ki = 0.5f;
+            gimbal.base_yaw.imuPID.outer.maxIntegral = 6000;
+            gimbal.base_yaw.imuPID.outer.ki = 0.5f;
             break;
 
         default:
-            // gimbal.base_yaw.imuPID.outer.maxIntegral = 1000;
-            // gimbal.base_yaw.imuPID.outer.ki = 0.1f;
+            gimbal.base_yaw.imuPID.outer.maxIntegral = 1000;
+            gimbal.base_yaw.imuPID.outer.ki = 0.1f;
             break;
     }
 }
@@ -211,7 +220,10 @@ void Gimbal_ModeCtrl(void)
 static void Gimbal_HandleRocker(void)
 {
     gimbal.visionEnable = false;
-	Gimbal_RockerCtrl();
+	if(Rocker_Ctrl)
+		Gimbal_RockerCtrl();
+	else
+		Gimbal_MouseCtrl();
 }
 
 static void Gimbal_HandleFold(void)
@@ -249,7 +261,7 @@ static void Gimbal_HandleScan(void)
 
 
 
-/*******三种控制函数*********/
+/*******五种控制函数*********/
 void Gimbal_RockerCtrl()
 {
 	gimbal.top_yaw.targetAngle -= rcInfo.ch1 * 0.3 / 660.0f;	// yaw
@@ -271,6 +283,25 @@ void Gimbal_FoldCtrl()
 	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.IMU_angle;
 	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
 	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.IMU_angle + relativeAngle;  //翻译一下就是限幅过的relative angle
+}
+
+void Gimbal_MouseCtrl()
+{	
+	if(gimbal.visionEnable == true){
+		gimbal.Mouse.yawDPI = 0.005;
+		gimbal.Mouse.pitchDPI = 0.005;
+	}
+	else{
+		gimbal.Mouse.yawDPI = 0.0025;
+		gimbal.Mouse.pitchDPI = 0.0033;
+	}
+	gimbal.top_yaw.targetAngle -= Filter_AverCalc(&gimbal.Mouse.yawFilter, rcInfo.mouse.x * gimbal.Mouse.yawDPI);		// yaw锟睫革拷
+	gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
+	gimbal.top_pitch.targetAngle += Filter_AverCalc(&gimbal.Mouse.pitchFilter, rcInfo.mouse.y * gimbal.Mouse.pitchDPI); // pitch锟睫革拷
+		// 小pitch限位：相对于fold_pitch的相对角度限制
+	float relativeAngle = gimbal.top_pitch.targetAngle - gimbal.fold_pitch.IMU_angle;
+	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
+	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.IMU_angle + relativeAngle;	// 大pitch限位：绝对角度限制
 }
 
 void Gimbal_VisionCtrl()
@@ -330,14 +361,24 @@ void Gimbal_ScanCtrl()
     gimbal.scan.last_ideal_pitch = current_ideal_pitch;
 }
 
-// void Gimbal_Follow_IMU(void)
-// {
+/********依旧键鼠***********/
+void Gimbal_RegisterEvents()
+{
+	RC_Register(Key_C,CombineKey_None,KeyEvent_OnDown,Gimbal_Fold_KeyCallback);//一键折叠
+}
 
-//     float relative_angle_deg = gimbal.pitch.targetAngle - gimbal.pitch.angle;    
-//     p_target = gimbal.pitchMotor.para.pos + (relative_angle_deg * DEG_TO_RAD * PITCH_DIRECTION);    
-// //    LIMIT(p_target,MOTOR_ZERO_POS + MOTOR_ZERO_POS - gimbal.pitch.pitchMax * DEG_TO_RAD,MOTOR_ZERO_POS + gimbal.pitch.pitchMin);
-// }//MOTOR_ZERO_POS
-
+void Gimbal_Fold_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+    if(gimbal.fold_pitch.targetAngle > 75.0f)
+    {
+        gimbal.fold_pitch.targetAngle = 5.0f;
+		gimbal.top_pitch.targetAngle = 0.0f;
+    }
+    else if(gimbal.fold_pitch.targetAngle < 15.0f)
+    {
+        gimbal.fold_pitch.targetAngle = 90.0f;
+    }
+}
 /**************freertos任务**************/
 void Task_Gimbal_Callback()
 {
@@ -350,11 +391,9 @@ void Task_Gimbal_Callback()
         case GimbalState_Rocker:
             Gimbal_HandleRocker();
             break;
-
         case GimbalState_Vision:
             Gimbal_HandleVision();
             break;
-
         case GimbalState_Scan:
             Gimbal_HandleScan();
             break;

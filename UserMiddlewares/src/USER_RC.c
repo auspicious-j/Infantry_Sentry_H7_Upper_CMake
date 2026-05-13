@@ -6,6 +6,7 @@
 #include "USER_Moto.h"
 #include "USER_B2B.h"
 #include "Crc.h"
+#include <stdbool.h>
 
 
 uint8_t usart5RxBuf[25]; // 串口5缓冲区
@@ -13,10 +14,12 @@ MC6C_RC_t rcInfo_MC6C = {0};//三个遥控器各自的接口
 DR16_RC_T rcInfo_DR16 = {0};
 ET08_RC_t rcInfo_ET08 = {0};
 
+RC_TypeDef rcInfo = {0};//统一接口
+
 uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
 Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
 
-RC_TypeDef rcInfo = {0};//统一接口
+bool Rocker_Ctrl = true;
 
 int rc_true_flag;
 

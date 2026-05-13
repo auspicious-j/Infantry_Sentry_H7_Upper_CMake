@@ -1,10 +1,10 @@
 #include "Shooter.h"
+#include "USER_RC.h"
 #include "bsp_can.h"
 #include "Slope.h"
 #include <stdio.h>
 #include <math.h>
 #include "chassis.h"
-#include "USER_RC.h"
 #include "beep.h"
 #include "vision.h"
 #include "gimbal.h"
@@ -13,6 +13,7 @@
 Shooter shooter;
 uint8_t shootMaxSpeed = 24;
 uint32_t t = 0; // 线性火控延时
+int8_t shootSpeed = -1;
 
 
 void Shooter_InitPID(void);
@@ -24,6 +25,7 @@ void Shooter_Init()
 	shooter.fricSpd = -6500;					//
 	Slope_Init(&shooter.fricSlope, 140, 0); // 摩擦轮斜坡
 	Shooter_InitPID();						// m初始化电机pid
+	Shooter_RegisterEvents();				// 注册事件
 	shooter.fricMotor[0].targetSpeed = -0;
 	shooter.fricMotor[1].targetSpeed = +0;
 	shooter.workState = IDLE;
@@ -40,6 +42,113 @@ void Shooter_InitPID()
 	SMCInit(&shooter.fricMotor[0].FricSMC, 0.03682, 205.121796, 2.62, 27.417, 5.0); // 左
 	SMCInit(&shooter.fricMotor[1].FricSMC, 0.03682, 205.121796, 2.62, 27.417, 5.0); // 右
 }
+
+/*************************RC事件**************************
+以下任务受键鼠event调度
+*********************************************************/
+// 注册事件--射击
+
+void Shooter_RegisterEvents()
+{
+	// 左键按下抬起开关拨弹
+	RC_Register(Key_Left, CombineKey_None, KeyEvent_OnClick, Shooter_SwitchState_KeyCallback);
+	RC_Register(Key_Left, CombineKey_None, KeyEvent_OnUp, Shooter_SwitchState_KeyCallback);
+	RC_Register(Key_Left, CombineKey_None, KeyEvent_OnLongPress, Shooter_SwitchState_KeyCallback);
+	// F开启摩擦轮
+	RC_Register(Key_F, CombineKey_None, KeyEvent_OnDown, Shooter_StartFric_KeyCallback);
+	// SHIFT+Q提高100摩擦轮转速
+	RC_Register(Key_Q, CombineKey_Shift, KeyEvent_OnDown, Shooter_IncFricSpeed_KeyCallback);
+	// SHIFT+E减小100摩擦轮转速
+	RC_Register(Key_E, CombineKey_Shift, KeyEvent_OnDown, Shooter_DecFricSpeed_KeyCallback);
+}
+
+// 触发/停止拨弹工作
+void Shooter_SwitchState_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	switch (event)
+	{
+	case KeyEvent_OnClick:			   // 单发拨弹
+		if (shooter.fricOpenFlag == 1) // 摩擦轮开启 允许拨弹
+		{
+			shooter.workState = TRIGGER_CLICK;
+		}
+		break;
+
+	case KeyEvent_OnLongPress:		   // 连发拨弹
+		if (shooter.fricOpenFlag == 1) // 摩擦轮开启 允许拨弹
+		{
+			shooter.workState = TRIGGER_CONTINUE;
+		}
+		break;
+
+	case KeyEvent_OnUp:				   // 鼠标左键抬起
+		if (shooter.fricOpenFlag == 1) // 摩擦轮开启 ，不允许拨弹
+		{
+			shooter.workState = IDLE;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+// 手动打开/关闭摩擦轮
+void Shooter_StartFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	if(shooter.fricOpenFlag)
+	{
+		shooter.fricOpenFlag=0;
+		shooter.fricMotor[0].targetSpeed = 0;
+		shooter.fricMotor[1].targetSpeed = 0;
+	}
+	else
+	{
+		shooter.fricMotor[0].targetSpeed = -shooter.fricSpd;
+		shooter.fricMotor[1].targetSpeed = shooter.fricSpd;
+		shooter.fricOpenFlag=1;
+	}
+}
+
+void Shooter_IncFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	shooter.fricSpd += 100;
+	Slope_SetTarget(&shooter.fricSlope, shooter.fricSpd); // 摩擦轮斜坡
+	Slope_NextVal(&shooter.fricSlope);					  // 斜坡下一个值
+	shooter.fricMotor[0].targetSpeed = -Slope_GetVal(&shooter.fricSlope)*shootSpeed;
+	shooter.fricMotor[1].targetSpeed = +Slope_GetVal(&shooter.fricSlope)*shootSpeed;
+}
+
+void Shooter_DecFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	shooter.fricSpd -= 100;
+	Slope_SetTarget(&shooter.fricSlope, shooter.fricSpd); // 摩擦轮斜坡
+	Slope_NextVal(&shooter.fricSlope);					  // 斜坡下一个值
+	shooter.fricMotor[0].targetSpeed = -Slope_GetVal(&shooter.fricSlope)*shootSpeed;
+	shooter.fricMotor[1].targetSpeed = +Slope_GetVal(&shooter.fricSlope)*shootSpeed;
+}
+uint32_t getCurrentMicros(void)
+{
+	uint32_t primask = __get_PRIMASK();
+	__disable_irq();
+
+	uint32_t m = HAL_GetTick();
+	__IO uint32_t v = SysTick->VAL;
+	// If an overflow happened since we disabled irqs, it cannot have been
+	// processed yet, so increment m and reload VAL to ensure we get the
+	// post-overflow value.
+	if (SCB->ICSR & SCB_ICSR_PENDSTSET_Msk)
+	{
+		++m;
+		v = SysTick->VAL;
+	}
+
+	// Restore irq status
+	__set_PRIMASK(primask);
+
+	const uint32_t tms = SysTick->LOAD + 1;
+	return (m * 1000 + ((tms - v) * 1000) / tms);
+}
+/******************结束键鼠*******************/
 
 bool Heat_Limit()
 {
@@ -105,15 +214,14 @@ void Shooter_RockerCtrl()
 			if(shooter.fricOpenFlag)
 			{
 				shooter.fricOpenFlag=0;
-				shooter.fricMotor[0].targetSpeed = 0 ;
-				shooter.fricMotor[1].targetSpeed =0;
+				shooter.fricMotor[0].targetSpeed = 0;
+				shooter.fricMotor[1].targetSpeed = 0;
 			}
 			else
 			{
-				shooter.fricMotor[0].targetSpeed = -shooter.fricSpd ;
-				shooter.fricMotor[1].targetSpeed = shooter.fricSpd ;
+				shooter.fricMotor[0].targetSpeed = -shooter.fricSpd;
+				shooter.fricMotor[1].targetSpeed = shooter.fricSpd;
 				shooter.fricOpenFlag=1;
-			
 			}
 		}
 		lastwheel = rcInfo.wheel;
@@ -168,8 +276,8 @@ void Task_Shooter_Callback()
 	
 	shooter.last_bullet_speed = shooter.bullet_speed; 
 	
-
-	Shooter_RockerCtrl();
+	if(Rocker_Ctrl)
+		Shooter_RockerCtrl();
 //	Shooter_state(shooter.fricOpenFlag);
 
 	

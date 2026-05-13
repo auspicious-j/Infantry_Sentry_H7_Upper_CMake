@@ -1,11 +1,12 @@
 #include "Chassis.h"
 #include "USER_Moto.h"
-#include "bsp_can.h"
 #include "USER_RC.h"
+#include "bsp_can.h"
 #include "user_lib.h"
 #include "arm_math.h"
 #include "Gimbal.h"
 #include "vision.h"
+#include <stdbool.h>
 
 
 int8_t diagonal_enable = 0;
@@ -46,12 +47,17 @@ void Chassis_Init()
 	Slope_Init(&chassis.move.outputSlope, 0.1, 0);
 	Slope_Init(&chassis.move.chargeSlope, 0.15, 0);
 
+    Filter_InitAverFilter(&gimbal.Mouse.yawFilter, 10); //
+    Filter_InitAverFilter(&gimbal.Mouse.pitchFilter, 2);
+    Filter_InitAverFilter(&gimbal.visionFilter.find, 25); // 
+
 	Chassis_InitPID();
+    Chassis_RegisterEvents();
 }
 
 void Chassis_InitPID()
 {
-	PID_Init(&chassis.rotate.pid, 0.2, 0, 0.3, 2, 15); // 15	PID_Init(&chassis.rotate.pid, 0.4, 0.001, 0.15, 0, 15); // 15
+	PID_Init(&chassis.rotate.pid, 0.25, 0, 9, 2, 15); // 15	PID_Init(&chassis.rotate.pid, 0.4, 0.001, 0.15, 0, 15); // 15
 	PID_SetDeadzone(&chassis.rotate.pid, 0.1);
 }
 
@@ -100,25 +106,27 @@ void Chassis_ModeCtrl(void)
     switch(chassis.pattern)
     {
         case Chassis_control: //人控模式
-            switch(chassis.rotate.mode)
-            {
-                case ChassisMode_Follow:
-                    if(rcInfo.left == 2)
-                    {
-                        chassis.rotate.mode = ChassisMode_Spin;
-                    }
-                    break;
+            if(Rocker_Ctrl == true){
+                switch(chassis.rotate.mode)
+                {
+                    case ChassisMode_Follow:
+                        if(rcInfo.left == 2)
+                        {
+                            chassis.rotate.mode = ChassisMode_Spin;
+                        }
+                        break;
 
-                case ChassisMode_Spin:
+                    case ChassisMode_Spin:
 
-                    if(rcInfo.left == 3)
-                    {
-                        chassis.rotate.mode = ChassisMode_Follow;
-                    }
-                    break;
+                        if(rcInfo.left == 3)
+                        {
+                            chassis.rotate.mode = ChassisMode_Follow;
+                        }
+                        break;
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
             }
             break;
 
@@ -137,6 +145,106 @@ void Chassis_ModeCtrl(void)
             break;
     }
 }
+/*************************RC事件**************************
+以下任务受键鼠event调度
+*********************************************************/
+void Chassis_RegisterEvents()
+{
+	RC_Register(Key_W | Key_A | Key_S | Key_D, CombineKey_None, KeyEvent_OnDown, Chassis_Move_KeyCallback); 
+	RC_Register(Key_W | Key_A | Key_S | Key_D, CombineKey_None, KeyEvent_OnUp, Chassis_Stop_KeyCallback);	
+	RC_Register(Key_Q | Key_E | Key_G, CombineKey_None, KeyEvent_OnDown, Chassis_SwitchMode_KeyCallback);	
+	// RC_Register(Key_V, CombineKey_None, KeyEvent_OnDown, Chassis_capOutputChange_KeyCallback);
+	// RC_Register(Key_E | Key_R, CombineKey_Ctrl, KeyEvent_OnDown, Chassis_Return_KeyCallback);
+	// RC_Register(Key_B, CombineKey_None, KeyEvent_OnDown, Chassis_ChangeDiagonal);
+
+	//  RC_Register(Key_V,CombineKey_Shift,KeyEvent_OnDown,Chassis_capBurstChange_KeyCallback);
+	//	RC_Register(Key_Shift,CombineKey_None,KeyEvent_OnDown,Cap_On_KeyCallback);
+	RC_Register(Key_Shift, CombineKey_None, KeyEvent_OnUp, UI_UPdate);
+	RC_Register(Key_Shift, CombineKey_None, KeyEvent_OnDown, UI_UPdate);
+}
+
+void Chassis_Move_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	switch (key)
+	{
+	case Key_W:
+		chassis.key.key_w = -1;
+		break;
+	case Key_S:
+		chassis.key.key_s = 1;
+		break;
+	case Key_D:
+		chassis.key.key_d = 1;
+		break;
+	case Key_A:
+		chassis.key.key_a = -1;
+		break;
+	default:
+		break;
+	}
+}
+
+void UI_UPdate(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	// if (event == KeyEvent_OnDown)
+    	// UIupdateState = 1;
+	// else
+		// UIupdateState = 0;
+}
+
+// 停止移动按键回调
+void Chassis_Stop_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	switch (key)
+	{
+	case Key_W:
+		chassis.key.key_w = 0;
+		break;
+	case Key_S:
+		chassis.key.key_s = 0;
+		break;
+	case Key_D:
+		chassis.key.key_d = 0;
+		break;
+	case Key_A:
+		chassis.key.key_a = 0;
+		break;
+	default:
+		break;
+	}
+}
+
+void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	if (chassis.rotate.mode != ChassisMode_Follow) //  Q/E/R???g? ????????????g?
+	{
+		chassis.rotate.mode = ChassisMode_Follow;
+	}
+	else
+	{
+		switch (key)
+		{
+		case Key_Q: // 小陀螺模式
+			PID_Clear(&chassis.rotate.pid);
+			chassis.rotate.mode = ChassisMode_Spin;
+			Slope_SetTarget(&chassis.move.spinSlope, chassis.move.maxVw);
+			break;
+		// case Key_E: // 左转90
+		// 	if (chassis.rotate.pid.maxOutput == 0)
+		// 	{
+		// 		chassis.rotate.pid.maxOutput = 13;
+		// 	}
+		// 	else
+		// 	{
+		// 		chassis.rotate.pid.maxOutput = 0;
+		// 	}
+		// 	break;
+		default:
+			break;
+		}
+	}
+}
+
 
 /*更新移动数据*/
 void Chassis_UpdateMove(void)
@@ -151,8 +259,16 @@ void Chassis_UpdateMove(void)
     }
     else
     {
-        Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
-        Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
+        if (Rocker_Ctrl)
+        {
+            Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
+            Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
+        }
+        else 
+        {
+            Slope_SetTarget(&chassis.move.ySlope, chassis.move.maxVy * (chassis.key.key_w + chassis.key.key_s)); // ?????????
+            Slope_SetTarget(&chassis.move.xSlope, chassis.move.maxVx * (chassis.key.key_d + chassis.key.key_a)); // ?????????
+        }
     }
 	chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
 	chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
@@ -175,10 +291,10 @@ static void Chassis_HandleFollow(void) //底盘跟随模式
     PID_SingleCalc(&chassis.rotate.pid, 0, -angle);
     chassis.move.vw = chassis.rotate.pid.output + chassis.move.spinSlope.value;
     LIMIT(chassis.move.vw,-chassis.move.maxVw,chassis.move.maxVw);
-    if(gimbal.visionEnable == true)
-    {
-        chassis.move.vw = 0;
-    }
+    // if(gimbal.visionEnable == true)
+    // {
+    //     chassis.move.vw = 0;
+    // }
 	if (chassis.pattern == Chassis_AI)
 	{
 		chassis.move.vw = vw;

@@ -5,6 +5,7 @@
 #include "pid.h"
 #include "Slope.h"
 #include "USER_Moto.h"
+#include "USER_RC.h"
 
 #define WHEELSPEED_MAX 8000
 
@@ -46,6 +47,14 @@ typedef struct _Chassis
 		Slope xSlope, ySlope, outputSlope, chargeSlope, spinSlope; // 斜坡
 	} move;
 	
+	struct
+	{
+		int8_t key_w;
+		int8_t key_a;
+		int8_t key_s;
+		int8_t key_d;
+	} key;
+
 	// 旋转相关信息
 	struct
 	{
@@ -65,5 +74,12 @@ extern float vx,vy,vw;
 
 void Chassis_InitPID(void);
 void Chassis_UpdateSlope();
+void Chassis_RegisterEvents();
+void Chassis_Move_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void UI_UPdate(KeyType key, KeyCombineType combine, KeyEventType event);
+void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Chassis_Stop_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Gimbal_RegisterEvents();
+
 
 #endif

@@ -84,8 +84,6 @@ typedef enum
     SWITCH_MID = 3,
     SWITCH_DOWN = 1
 } SwitchState;
-
-
 typedef struct
 {  /* rocker channel information */
   int16_t ch1;
@@ -310,6 +308,7 @@ typedef struct _Key
 	uint32_t startPressTime;
 }Key;
 
+//RC初始化
 void RC_Init(void);
 //注册一个按键回调
 void RC_Register(uint32_t key,KeyCombineType combine,KeyEventType event,KeyCallbackFunc func);
@@ -320,5 +319,6 @@ extern MC6C_RC_t rcInfo_MC6C;
 extern DR16_RC_T rcInfo_DR16;
 extern ET08_RC_t rcInfo_ET08; 
 extern RC_TypeDef rcInfo;
+extern bool Rocker_Ctrl;
 
 #endif

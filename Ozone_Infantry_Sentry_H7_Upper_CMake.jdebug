@@ -33,6 +33,7 @@ void OnProjectLoad (void) {
   //
   // User settings
   //
+  Edit.SysVar (VAR_HSS_SPEED, FREQ_100_HZ);
   File.Open ("$(ProjectDir)/build/Debug/Infantry_Sentry_H7_Upper_CMake.elf");
 }
 
