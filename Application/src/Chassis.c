@@ -131,14 +131,15 @@ void Chassis_ModeCtrl(void)
             break;
 
         case Chassis_AI: //AI模式
-            if(vision_receive.spin_mode)
-            {
-				chassis.rotate.mode = ChassisMode_Spin;
-            }
-            else
-            {
-                chassis.rotate.mode = ChassisMode_Follow;
-            }
+            // if(vision_receive.spin_mode)
+            // {
+			//     chassis.rotate.mode = ChassisMode_Spin;
+            // }
+            // else
+            // {
+            //     chassis.rotate.mode = ChassisMode_Follow;
+            // }
+            chassis.rotate.mode = ChassisMode_Follow;
             break;
 
         default:

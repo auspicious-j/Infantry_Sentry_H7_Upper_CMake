@@ -8,15 +8,52 @@
 #include "chassis.h"
 #include "Judge.h"
 #include "USER_B2B.h"
+#include "Crc.h"
 
 VisionTransmit vision_transmit;
 VisionReceive vision_receive;
-Vision_t vision;
+Vision_Type vision;
+
+uint8_t Vision_Mode = 0; // 0为空闲，1为装甲板，2为小符，3为大符
+uint8_t cmd_fire = 0;
+
+VisionSensorInfo vision_sensor_info = {
+	.yaw = 0,
+	.pitch = 0,
+	.found = 0,
+	.fire = 0,
+};
+
+VisionSensor vision_sensor = {
+	.sent_info = &vision_sensor_info, // 数据结构体
+	.Init = Vision_Init,			  // 传感器初始化
+	.Update = Vision_DataUpdate,
+	.DataReceive = Vision_DataReceive,
+	.Data_Transmit = Vision_DataTransmit,
+};
 
 void Vision_Init(void)
 {
 	vision_transmit.header = VISION_FRAME_HEADER_TX;
-}   
+	Vision_RegisterEvents();
+}
+
+// 注册事件
+void Vision_RegisterEvents()
+{
+	// R键切换视觉模式
+	RC_Register(Key_R, CombineKey_None, KeyEvent_OnDown, Vision_Change_KeyCallback);
+	// RC_Register(Key_X,CombineKey_None,KeyEvent_OnDown,Vision_RuneDir_KeyCallback);
+	// RC_Register(Key_A,CombineKey_Ctrl,KeyEvent_OnDown,Vision_Expo_KeyCallback);
+	// RC_Register(Key_D,CombineKey_Ctrl,KeyEvent_OnDown,Vision_Expo_KeyCallback);
+	// RC_Register(Key_W,CombineKey_Ctrl,KeyEvent_OnDown,Vision_Change_KeyCallback);
+}
+
+// 切换视觉模式
+void Vision_Change_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	Vision_Mode = (Vision_Mode+1) % 4;
+}
 
 //接收来自视觉的信息
 void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length)
@@ -49,52 +86,16 @@ void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length)
 void Vision_DataUpdate(void)
 {	
 	vision_transmit.header = 0x5A;
-	vision_transmit.diff_yaw = (gimbal.top_yawMotor.angle - TOP_YAW_OFFSET) / 8192.0f * 360.0f;
-  	vision_transmit.diff_pitch = (TOP_PITCH_OFFSET - gimbal.top_pitchMotor.para.pos) / (2 * PI) * 360.0f;
-	vision_transmit.top_yaw = gimbal.top_yaw.totalAngle;
-	vision_transmit.pitch = INS.pitch;
-	vision_transmit.roll = INS.roll;
-	vision_transmit.detect_color = !USER_JudgeData.self_color; // 打红0 打蓝1
-	vision_transmit.end_frame = 0xA5;
-	vision_transmit.yaw_delta = chassis.rotate.relativeAngle;
-	vision_transmit.yaw_delta = chassis_yaw - INS.yaw;
-	vision_transmit.bullet_speed = USER_JudgeData.initial_speed;
-	vision_transmit.robo_status = 0xFF;  /*receive_485.Judge_Data.robo_status;*/
-	memcpy(&vision_transmit.AI_Judge_data, &USER_JudgeData, sizeof(Judge_Data_e));
-}
-
-void Vision_ParseData(void)
-{
-		vision.pitch = vision_receive.pitch;
-		vision.base_yaw = vision_receive.base_yaw;
-		vision.top_yaw = vision_receive.top_yaw;
-		vision.found = vision_receive.tracking;
-		vision.distance = vision_receive.distance;//视觉部分解包	
+	vision_transmit.task_mode = Vision_Mode;
+	vision_transmit.enemy_color = 0; // 打红0 打蓝1
+	vision_transmit.bullet_speed = 21; //暂时随便给上 一个数，之后再加
+	vision_transmit.roll = INS.roll/180.0f*PI;
+	vision_transmit.pitch = INS.pitch/180.0f*PI;
+	vision_transmit.pitch_vel = -INS.gyro[0];
+	vision_transmit.yaw = INS.yaw/180.0f*PI;
+	vision_transmit.yaw_vel = -INS.gyro[1];
 	
-		vx=-vision_receive.linear_y*1000;
-		vy=-vision_receive.linear_x*1000;
-		vw=vision_receive.angular_z;
- 	   chassis.rotate.fake_relativeAngle = vision_receive.fake_relativeAngle;
-		if(vision_receive.tracking && shooter.fricOpenFlag==1 && gimbal.visionEnable)
-		{
-				float D = vision.distance, R = 0 /*vision_receive.spin_radius*/, r = vision_receive.armor_radius;//0.108 : 0.061
-				float a = INS.yaw / 180.0f * PI - vision.top_yaw / 180 * PI, b = vision_receive.armor_yaw ; //a是云台角度和目标角度error  b是装甲板的入射角
-				float rcosb = r * cos(b), rsinb = r * sin(b), Rcosb = R * cos(b), Rsinb = R * sin(b), tana = tan(a);
-				
-				if (tana < (rcosb - Rsinb) / (D - Rcosb - rsinb) &&
-				    tana > (-rcosb - Rsinb) / (D - Rcosb + rsinb))
-				{	
-						shooter.workState=TRIGGER_CONTINUE;
-				}
-				else
-				{
-						shooter.workState=IDLE;
-				}
-		}
-		else
-		{
-				shooter.workState=IDLE;
-		}
+	Append_CRC16_Check_Sum((uint8_t *)&vision_transmit, sizeof(vision_transmit));
 }
 
 
@@ -104,13 +105,49 @@ void Vision_DataTransmit(void)
 	CDC_Transmit_HS((uint8_t*)&vision_transmit, sizeof(vision_transmit));
 }
 
+void Vision_ParseData(void)
+{
+	
+	//new version
+	vision.control = vision_receive.control;
+	vision.fire_thres_yaw = vision_receive.fire_thres_yaw; // 火控阈值
+	vision.fire_thres_pitch = vision_receive.fire_thres_pitch;
+	vision.target_top_yaw = vision_receive.target_yaw;
+	vision.target_top_pitch = vision_receive.target_pitch;
+	vision.top_yaw = vision_receive.yaw/PI*180.0f;
+	vision.top_yaw_vel = vision_receive.yaw_vel;
+	vision.top_yaw_acc = vision_receive.yaw_acc;
+	vision.top_pitch = vision_receive.pitch/PI*180.0f;
+	vision.top_pitch_vel = vision_receive.pitch_vel;
+	vision.top_pitch_acc = vision_receive.pitch_acc;
+	vision.bullet_id = vision_receive.bullet_id;
+	//键鼠开自瞄
+	if (rcInfo.mouse.r == 1 && visionFindAver>=0.5f)
+	{
+		gimbal.visionEnable = true;
+	}
+	//下位机火控
+	if(ABS(gimbal.top_pitch.angle/180*PI-vision.target_top_pitch) < vision.fire_thres_pitch && ABS(gimbal.top_yaw.angle/180*PI-vision.target_top_yaw)<vision.fire_thres_yaw){
+		cmd_fire = 1;
+	}
+	else{
+		cmd_fire = 0;
+	}
+ 
+	if (cmd_fire == 1 &&shooter.fricOpenFlag == 1 && shooter.workState != TRIGGER_CONTINUE && shooter.workState != TRIGGER_CLICK && gimbal.visionEnable == true)
+	{
+		//上位机火控允许发弹
+		shooter.workState = TRIGGER;
+	}
+}
+
+
 void OS_VisionCallback(void const * argument)
 {
-	Vision_Init();
-
+	vision_sensor.Init();
 	for(;;)
 	{
-		Vision_DataTransmit();
+		vision_sensor.Data_Transmit();
 		osDelay(1);
 	}
 }

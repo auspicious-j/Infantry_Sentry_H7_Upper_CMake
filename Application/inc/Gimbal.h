@@ -110,6 +110,7 @@ typedef struct
 
 extern Gimbal_t gimbal;
 extern float p_target;
+extern float visionFindAver;
 
 void Gimbal_Init(void);
 void Gimbal_RockerCtrl();
