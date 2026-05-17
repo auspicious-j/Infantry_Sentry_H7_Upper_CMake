@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #define DEG_TO_RAD 0.01745329f  // PI / 180
+#define RAD_TO_DEG 57.2957795f  // 180 / PI
 #define TOP_YAW_LIMIT 45.0f
 #define BASE_YAW_J 0.04575f
 
@@ -32,7 +33,7 @@ void Gimbal_Init()
 	gimbal.top_pitch.initAngle = 0; // 陀螺仪pitch开机角度 *0表示pitch水平
 	gimbal.top_pitch.targetAngle = gimbal.top_pitch.initAngle;
 
-	gimbal.fold_pitch.pitchMax = 90;
+	gimbal.fold_pitch.pitchMax = 95;
 	gimbal.fold_pitch.pitchMin = 5;
 
 	gimbal.fold_pitch.initAngle = 90;
@@ -66,7 +67,7 @@ void Gimbal_InitPID()
 	DEPID_Init(&gimbal.top_pitch.imuPID.deOuter, 75, 0.7, 120, 200, 7000, 0.6);//45, 0.7, 50串级pid
 	PID_Init(&gimbal.top_pitch.imuPID.outer,-0.5,-0.001,-5,1,10); //自己写位置环 mit速度环
 
-	PID_Init(&gimbal.fold_pitch.imuPID.outer, 1, 0.001, 10, 3, 15);
+	PID_Init(&gimbal.fold_pitch.imuPID.outer, 1.8, 0.001, 10, 1, 15);
 
 	PID_Init(&gimbal.base_yaw.imuPID.inner,5.8,0.02,3.5,1000,7000);
 	DEPID_Init(&gimbal.base_yaw.imuPID.deOuter,37,0.03,173,700,2000,0.45);	//串级pid
@@ -102,8 +103,8 @@ void Gimbal_UpdateAngle()
 	gimbal.base_yaw.gyro = gimbal.base_yawMotor.para.vel;
 	gimbal.top_pitch.gyro = -INS.gyro[0];
 	gimbal.top_pitch.angle = INS.pitch;
-	gimbal.fold_pitch.angle = gimbal.fold_pitchMotor.nowAngle - FOLD_PITCH_OFFSET * DEG_TO_RAD;//根据折叠pitch的电机编码器值控制
-	gimbal.fold_pitch.IMU_angle = gimbal.top_pitch.angle + (gimbal.top_pitchMotor.para.pos - TOP_PITCH_OFFSET) * DEG_TO_RAD + 90.0f;//根据顶上pitch的imu角度和电机编码器值得出折叠pitch的imu角度
+	gimbal.fold_pitch.angle = gimbal.fold_pitchMotor.nowAngle - FOLD_PITCH_OFFSET * RAD_TO_DEG;//根据折叠pitch的电机编码器值控制
+	gimbal.fold_pitch.IMU_angle = gimbal.top_pitch.angle + (gimbal.top_pitchMotor.para.pos - TOP_PITCH_OFFSET) * RAD_TO_DEG + 90.0f;//根据顶上pitch的imu角度和电机编码器值得出折叠pitch的imu角度
 	gimbal.fold_pitch.gyro = gimbal.fold_pitchMotor.para.vel;
 	
 	//pitch角度归一化到-180~180度
@@ -128,7 +129,7 @@ void Gimbal_UpdateAngle()
 	}
 	else if (gimbal.fold_pitch.angle < 15.0f && gimbal.fold_pitch.angle >= -5.0f)
 	{
-		// fold_pitch角度在0到-15度之间时，锁死角度为0度
+		// fold_pitch角度在0到-15度之间时，锁死角度为5度
 		gimbal.top_pitch.relativePitchMax = 5.0f;
 		gimbal.top_pitch.relativePitchMin = 4.9f;
 	}
@@ -401,7 +402,7 @@ void Gimbal_Fold_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType e
     }
     else if(gimbal.fold_pitch.targetAngle < 15.0f)
     {
-        gimbal.fold_pitch.targetAngle = 90.0f;
+        gimbal.fold_pitch.targetAngle = 95.0f;
     }
 }
 /**************freertos任务**************/
@@ -416,7 +417,7 @@ void Task_Gimbal_Callback()
         case GimbalState_Rocker:
             Gimbal_HandleRocker();
             break;
-        case GimbalState_Vision:
+        case GimbalState_Vision:	
             Gimbal_HandleVision();
             break;
         case GimbalState_Scan:

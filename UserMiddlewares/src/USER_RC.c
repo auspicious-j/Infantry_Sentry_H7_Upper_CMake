@@ -19,7 +19,7 @@ RC_TypeDef rcInfo = {0};//统一接口
 uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
 Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
 
-bool Rocker_Ctrl = true;
+bool Rocker_Ctrl = false;
 
 int rc_true_flag;
 
