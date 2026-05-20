@@ -10,10 +10,10 @@
 //各种电机编码值与角度的换算
 #define MOTOR_M3508_DGR2CODE(dgr) ((int32_t)((dgr)*436.9263f)) //3591/187*8191/360
 #define MOTOR_M3508_CODE2DGR(code) ((float)((code)/436.9263f))
-	
+
 #define MOTOR_M2006_DGR2CODE(dgr) ((int32_t)((dgr)*819.1f)) //36*8191/360
 #define MOTOR_M2006_CODE2DGR(code) ((float)((code)/819.1f))
-	
+
 #define MOTOR_M6020_DGR2CODE(dgr) ((int32_t)((dgr)*22.7528f)) //8191/360
 #define MOTOR_M6020_CODE2DGR(code) ((float)((code)/22.7528f))
 
@@ -32,6 +32,10 @@
 #define KD_MAX 5.0f
 #define T_MIN -10.0f
 #define T_MAX 10.0f
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 
 typedef struct DJIMOTOR
 {

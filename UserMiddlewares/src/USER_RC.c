@@ -7,6 +7,7 @@
 #include "USER_B2B.h"
 #include "Crc.h"
 #include <stdbool.h>
+#include "USER_Detcet.h"
 
 
 uint8_t usart5RxBuf[25]; // 串口5缓冲区
@@ -19,7 +20,7 @@ RC_TypeDef rcInfo = {0};//统一接口
 uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
 Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
 
-bool Rocker_Ctrl = false;
+bool Rocker_Ctrl = true;
 
 int rc_true_flag;
 
@@ -316,9 +317,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	if (huart == &huart2)
 	{
 		B2B_Receive();
+    Detect_Update(DeviceID_B2B);
 	}
 	if (huart == &huart5)
 	{
+    Detect_Update(DeviceID_RC);
 #if (USER_RC_TYPE == USER_RC_TYPE_MC6C)
 		MC6C_ParseSBUS(usart5RxBuf, &rcInfo_MC6C);
 		MC6C_ToUnified(&rcInfo_MC6C, &rcInfo);

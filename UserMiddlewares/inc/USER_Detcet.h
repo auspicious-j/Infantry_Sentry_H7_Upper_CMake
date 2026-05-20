@@ -12,14 +12,24 @@ enum
 	DeviceID_ChassisMotor3,
 	DeviceID_ChassisMotor4,
 	// 云台电机
-	DeviceID_YawMotor,
+	DeviceID_TopYawMotor,
+	DeviceID_BaseYawMotor,
+	DeviceID_TopPitchMotor,
+	DeviceID_FoldPitchMotor,
 	// 拨弹电机
 	DeviceID_TrigMotor,
+	DeviceID_FricMotor1,
+	DeviceID_FricMotor2,
+  // 遥控器
+	DeviceID_RC,
 	// 板间通信
 	DeviceID_B2B,
 	// 裁判系统接收
 	DeviceID_Judge,
-	
+	// 陀螺仪
+	DeviceID_IMU,
+	// 视觉MINI PC
+	DeviceID_PC,
 	DETECT_DEVICE_NUM // 放在最后，代表设备数量(设备离线信息列表长度)
 };
 

@@ -9,6 +9,7 @@
 #include "Judge.h"
 #include "USER_B2B.h"
 #include "Crc.h"
+#include "USER_Detcet.h"
 
 VisionTransmit vision_transmit;
 VisionReceive vision_receive;
@@ -79,6 +80,7 @@ void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length)
 		//将数据存入接收buffer
 		memcpy(&vision_receive, read_from_usart, sizeof(vision_receive));
 		Vision_ParseData();
+    Detect_Update(DeviceID_PC);
 	}
 }
 
@@ -88,7 +90,7 @@ void Vision_DataUpdate(void)
 	vision_transmit.header = 0x5A;
 	vision_transmit.task_mode = Vision_Mode;
 	vision_transmit.enemy_color = 0; // 打红0 打蓝1
-	vision_transmit.bullet_speed = 21; //暂时随便给上 一个数，之后再加
+	vision_transmit.bullet_speed = 22; //暂时随便给上 一个数，之后再加
 	vision_transmit.roll = INS.roll/180.0f*PI;
 	vision_transmit.pitch = INS.pitch/180.0f*PI;
 	vision_transmit.pitch_vel = -INS.gyro[0];

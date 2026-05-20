@@ -1,4 +1,5 @@
 #include "bsp_can.h"
+#include "USER_Detcet.h"
 #include "fdcan.h"
 #include "USER_Moto.h"
 #include "Shooter.h"
@@ -108,6 +109,7 @@ void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 		case 0x201:
 		{
 			DJIMotor_Update(&shooter.triggerMotor, (rxdata[0] << 8 | rxdata[1]), (rxdata[2] << 8 | rxdata[3]), (rxdata[4] << 8 | rxdata[5]), rxdata[6]);
+			Detect_Update(DeviceID_TrigMotor);
 			break;
 		}
 		//驱动电机
@@ -116,6 +118,8 @@ void CAN1_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
         {
 			whichMotor = rx_header->Identifier - 0x202;
 			DJIMotor_Update(&shooter.fricMotor[whichMotor], (rxdata[0]<<8 | rxdata[1]), (rxdata[2]<<8 | rxdata[3]),(rxdata[4]<<8|rxdata[5]),rxdata[6]);
+			Detect_Update(DeviceID_FricMotor1 + whichMotor);
+			Detect_Update(DeviceID_FricMotor1 + whichMotor);
 			break;
 		}
 		//未知信息
@@ -133,24 +137,25 @@ void CAN2_Rx0Callback(FDCAN_RxHeaderTypeDef *rx_header,uint8_t *rxdata)
 		case 0x11:
         {
 			dm4310_fbdata(&gimbal.base_yawMotor,rxdata);
-//			Detect_Update(DeviceID_Turn_Motor1+whichMotor);	
+			Detect_Update(DeviceID_BaseYawMotor);	
 			break;
         }
 		case 0x12:
         {
 			dm4310_fbdata(&gimbal.top_pitchMotor,rxdata);
-//			Detect_Update(DeviceID_Turn_Motor1+whichMotor);	
+			Detect_Update(DeviceID_TopPitchMotor);	
 			break;
         }
 		case 0x13:
         {
 			dm4340_fbdata(&gimbal.fold_pitchMotor,rxdata);
-//			Detect_Update(DeviceID_Turn_Motor1+whichMotor);	
+			Detect_Update(DeviceID_FoldPitchMotor);	
 			break;
         }
 		case 0x205:
 		{
 			DJIMotor_Update(&gimbal.top_yawMotor,(rxdata[0] << 8 | rxdata[1]), (rxdata[2] << 8 | rxdata[3]), (rxdata[4] << 8 | rxdata[5]), rxdata[6]);
+			Detect_Update(DeviceID_TopYawMotor);
         	break;
 		}
 		//未知信息

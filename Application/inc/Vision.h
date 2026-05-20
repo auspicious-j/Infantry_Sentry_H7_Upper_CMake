@@ -90,6 +90,7 @@ typedef struct
 extern VisionReceive vision_receive;
 extern VisionTransmit vision_transmit;
 extern Vision_Type vision;
+extern uint8_t Vision_Mode;
 
 void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length);
 void Vision_DataTransmit(void);

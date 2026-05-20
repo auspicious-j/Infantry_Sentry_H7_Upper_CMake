@@ -7,8 +7,6 @@
 #include "USER_Moto.h"
 #include "USER_RC.h"
 
-#define WHEELSPEED_MAX 8000
-
 typedef enum
 {
 	ChassisMode_Follow,	  // 底盘跟随云台模式
@@ -25,12 +23,13 @@ typedef struct _Chassis
 	// 底盘尺寸信息
 	struct Info
 	{
-		float wheelbase;   // 轴距
-		float wheeltrack;  // 轮距
-		float wheelRadius; // 轮半径
-		float offsetX;	   // 重心在xy轴上的偏移
+		float wheelbase;	// 轴距
+		float wheeltrack;	// 轮距
+		float wheelRadius;	// 轮半径
+		float offsetX;		// 重心在xy轴上的偏移
 		float offsetY;
-		float R;		   // 轮子到中心的距离
+		float R;			// 轮子到中心的距离
+		float rpm_ratio;	// 电机转速转线速度的换算系数
 	} info;
 	// 4个电机
 	DJI_Motor_t motors[4];
@@ -43,7 +42,12 @@ typedef struct _Chassis
 
 		float maxVx, maxVy, maxVw; // 三个分量最大速度
 
-		float Wheelangle[4];
+		float real_vx;//根据当前轮速解算实际车速
+		float real_vy;
+		float real_vw;
+		PID real_xPID, real_yPID, real_wPID; // 速度pid
+
+		float maxPower;
 		Slope xSlope, ySlope, outputSlope, chargeSlope, spinSlope; // 斜坡
 	} move;
 	
@@ -60,17 +64,18 @@ typedef struct _Chassis
 	{
 		PID pid;				// 旋转PID，由relativeAngle计算底盘旋转速度
 		float relativeAngle;	// 云台与底盘的偏离角 单位度
-    	float fake_relativeAngle; //ai传来假底盘和假云台之间的偏离角 用于电控小陀螺 
 		float InitAngle;		// 云台与底盘对齐时的编码器度数 
 		int16_t InitpitchAngle; // 云台水平时编码器值
 		float nowAngle;		// 此时云台的编码器换算为°值
 		Chassis_Mode_e mode;		// 底盘模式 小陀螺或者底盘跟随
+		float ratio;				// 旋转速度系数 占最大速度的多少
 	} rotate;
 	Chassis_Pattern_e pattern;
 } Chassis_t;
 
 extern Chassis_t chassis;
 extern float vx,vy,vw;
+extern uint16_t SET_WHEELSPEED_MAX;
 
 void Chassis_InitPID(void);
 void Chassis_UpdateSlope();

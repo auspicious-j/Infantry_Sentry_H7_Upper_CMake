@@ -9,18 +9,21 @@
 #include "PID.h"
 #include "Filter.h"
 
-#define TOP_YAW_OFFSET 2376  //此处校准小yaw 7869
-#define INIT_YAW_ANGLE -120.0f   //此处校准大yaw
+#define TOP_YAW_OFFSET 5115  //此处校准小yaw 7869 2376 5115
+#define INIT_YAW_ANGLE -253.0f   //此处校准大yaw
 #define TOP_PITCH_OFFSET -1.08919096f //此处校准pitch
 #define FOLD_PITCH_OFFSET 0.0f //此处校准fold_pitch 校准效果为 当fold_pitch竖直向上时 角度为90度
 // #define FOLD_PITCH_OFFSET 1.53913379f //此处校准fold_pitch
 
-#define PITCH_DIRECTION -1
 #define MASS_G 9.81f
-#define PITCH_MASS 1.3f
-#define PITCH_R 0.07287f   // pitch中心及其距离
 
+#define TOP_PITCH_DIRECTION 1
+#define TOP_PITCH_MASS 1.237f
+#define TOP_PITCH_R 0.08587f   // pitch中心及其距离
 
+#define FOLD_PITCH_DIRECTION -1
+#define FOLD_PITCH_MASS 1.491f
+#define FOLD_PITCH_R 0.11104f    // fold_pitch中心及其距离
 
 
 typedef enum

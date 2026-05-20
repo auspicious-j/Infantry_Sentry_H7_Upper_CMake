@@ -3,7 +3,6 @@
 
 #include "stdint.h"
 #include "main.h"
-#include <sys/cdefs.h>
 
 #define BMI088_TEMP_FACTOR 0.125f
 #define BMI088_TEMP_OFFSET 23.0f

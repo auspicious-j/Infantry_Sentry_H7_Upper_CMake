@@ -6,6 +6,7 @@
 #include <math.h>
 #include "chassis.h"
 #include "beep.h"
+#include "shooter.h"
 #include "vision.h"
 #include "gimbal.h"
 #include "judge.h"
@@ -22,7 +23,7 @@ void Shooter_InitPID(void);
 //射击系统初始化
 void Shooter_Init()
 {
-	shooter.fricSpd = -6500;					//
+	shooter.fricSpd = -5500;					//
 	Slope_Init(&shooter.fricSlope, 140, 0); // 摩擦轮斜坡
 	Shooter_InitPID();						// m初始化电机pid
 	Shooter_RegisterEvents();				// 注册事件
@@ -283,7 +284,7 @@ void Task_Shooter_Callback()
 	
 //堵转处理
 //电机角度与目标角度相差超过10度则进行堵转判定
-	if(ABS(shooter.triggerMotor.totalAngle-shooter.triggerMotor.targetAngle)>MOTOR_M3508_DGR2CODE(10)&&shooter.workState!=TRIGGER_REVERSE) 
+	if(ABS(shooter.triggerMotor.totalAngle-shooter.triggerMotor.targetAngle)>MOTOR_M2006_DGR2CODE(10)&&shooter.workState!=TRIGGER_REVERSE) 
 	{
 		shooter.block.judgeCnt++; //堵转判定计数器++
 		if(shooter.block.judgeCnt>100) //计数器达到一定值，则判定为堵转，触发反转
@@ -304,9 +305,9 @@ void Task_Shooter_Callback()
 		{
 			if(JUDGE_IsValid()==false||Heat_Limit())   //未安装裁判系统 或 裁判系统剩余热量大于100 允许发射
 			{
-				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M3508_DGR2CODE(9))
+				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M2006_DGR2CODE(8))
 				{
-					shooter.triggerMotor.targetAngle+=MOTOR_M3508_DGR2CODE(360*1/9.0*2);  //每次转动1/9圈
+					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*1);  //每次转动1/8圈
 					shooter.workState=IDLE;    
 					shooter.number +=1;       
 					osDelay(t);	
@@ -323,9 +324,9 @@ void Task_Shooter_Callback()
 		{
 			if(JUDGE_IsValid()==false||Heat_Limit())   //未安装裁判系统 或 裁判系统剩余热量大于100 允许发射
 			{ 
-				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M3508_DGR2CODE(9))
+				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M2006_DGR2CODE(8))
 				{
-					shooter.triggerMotor.targetAngle+=MOTOR_M3508_DGR2CODE(360*1/9.0*2);  //每次转动1/9圈
+					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*8);  //每次转动1/8圈
 					shooter.workState=IDLE;    
 					shooter.number +=1;  
 					osDelay(t);						
@@ -341,9 +342,9 @@ void Task_Shooter_Callback()
 		case TRIGGER_CONTINUE:		
 			if(JUDGE_IsValid()==false||Heat_Limit())   //未安装裁判系统 或 裁判系统剩余热量大于100 允许发射
 			{ 
-				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M3508_DGR2CODE(9))
+				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M2006_DGR2CODE(8))
 				{
-					shooter.triggerMotor.targetAngle+=MOTOR_M3508_DGR2CODE(360*1/9.0*2);  //每次转动1/9圈    
+					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*1);  //每次转动1/8圈    
 					shooter.number +=1;    
 					osDelay(t);						
 				}						
@@ -357,9 +358,9 @@ void Task_Shooter_Callback()
 		case TRIGGER_REVERSE: 
 					 //嘀嘀嘀
 			Beep_PlayNotes((Note[]){{T_M1,D_Sixteenth},{T_M1,D_Sixteenth},{T_M1,D_Sixteenth}},3);          
-			shooter.triggerMotor.targetAngle-=MOTOR_M3508_DGR2CODE(360*1.5/9.0*2); //电机反向拨动1.5/9圈    
+			shooter.triggerMotor.targetAngle-=MOTOR_M2006_DGR2CODE(360*1.5/8.0*1); //电机反向拨动1.5/8圈    
 			osDelay(500);
-			shooter.triggerMotor.targetAngle+=MOTOR_M3508_DGR2CODE(360*0.5/9.0*2); //正转0.5/9圈                 
+			shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*0.5/8.0*1); //正转0.5/8圈                 
 			shooter.workState=IDLE;
 		break;    
 		

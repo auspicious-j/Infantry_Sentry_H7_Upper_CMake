@@ -1,6 +1,5 @@
 #ifndef _USER_RC_H_
 #define _USER_RC_H_
-#include "USER_RC.h"
 #include "stdint.h"
 #include "usart.h"
 #include "main.h"

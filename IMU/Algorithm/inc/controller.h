@@ -21,7 +21,6 @@
 #include "stdlib.h"
 #include "user_lib.h"
 #include <math.h>
-#include <sys/cdefs.h>
 
 #ifndef abs
 #define abs(x) ((x > 0) ? x : -x)

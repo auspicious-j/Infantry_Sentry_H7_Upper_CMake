@@ -63,16 +63,26 @@ void Detect_InitAll()
 {
 	Detect_InitDevice(DeviceID_ChassisMotor1, 100, NULL, NULL);
 	Detect_InitDevice(DeviceID_ChassisMotor2, 100, NULL, NULL);
-	Detect_InitDevice(DeviceID_ChassisMotor3,100, NULL, NULL);
+	Detect_InitDevice(DeviceID_ChassisMotor3, 100, NULL, NULL);
 	Detect_InitDevice(DeviceID_ChassisMotor4, 100, NULL, NULL);
 
+	Detect_InitDevice(DeviceID_TopYawMotor, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_BaseYawMotor, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_TopPitchMotor, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_FoldPitchMotor, 100, NULL, NULL);
+	detectList[DeviceID_TopYawMotor].isLost = 1;
+	detectList[DeviceID_BaseYawMotor].isLost = 1;
 
-	Detect_InitDevice(DeviceID_YawMotor, 100, NULL, NULL);
-	detectList[DeviceID_YawMotor].isLost = 1;
+	Detect_InitDevice(DeviceID_TrigMotor, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_FricMotor1, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_FricMotor2, 100, NULL, NULL);
 
-	Detect_InitDevice(DeviceID_B2B, 500, NULL, NULL);
+	Detect_InitDevice(DeviceID_RC, 500, NULL, NULL);
+	Detect_InitDevice(DeviceID_B2B, 100, NULL, NULL);
 
 	Detect_InitDevice(DeviceID_Judge, 500, Judge_UartLostCallback, NULL);
+	Detect_InitDevice(DeviceID_IMU, 100, NULL, NULL);
+	Detect_InitDevice(DeviceID_PC, 500, NULL, NULL);
 }
 
 extern uint8_t FLAG;
@@ -119,7 +129,7 @@ uint8_t Detect_IsDeviceLost(uint8_t deviceID)
 
 void OS_DetectCallback(void const *argument)
 {
-	osDelay(2000);
+	osDelay(1000);
 	for (;;)
 	{
 		Task_Detect_Callback();

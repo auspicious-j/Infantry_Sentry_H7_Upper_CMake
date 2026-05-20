@@ -1,12 +1,15 @@
 #include "Chassis.h"
+#include "PID.h"
 #include "USER_Moto.h"
 #include "USER_RC.h"
 #include "bsp_can.h"
+#include "pid.h"
 #include "user_lib.h"
 #include "arm_math.h"
 #include "Gimbal.h"
 #include "vision.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 
 int8_t diagonal_enable = 0;
@@ -14,6 +17,7 @@ float vx,vy,vw = 0;  //AI传来的旋转速度
 float wheelvx[4];
 float wheelvy[4];
 int32_t wheelRPM[4];
+uint16_t SET_WHEELSPEED_MAX = 8000;
 float targetangle[4];
 
 Chassis_t chassis = {0};
@@ -26,13 +30,15 @@ float mode_test;
 void Chassis_Init()
 {
 	// 底盘尺寸信息（用于解算轮速）
-	chassis.info.wheelbase = 320;
-	chassis.info.wheeltrack = 320;
-	chassis.info.wheelRadius = 115;
+	chassis.info.wheelbase = 420;
+	chassis.info.wheeltrack = 420;
+	chassis.info.wheelRadius = 75;
 	chassis.info.offsetX = 0; // 15
 	chassis.info.offsetY = 0; //-10
 	chassis.info.R = sqrtf(powf(chassis.info.wheelbase / 2 + chassis.info.offsetX, 2) + powf(chassis.info.wheeltrack / 2 + chassis.info.offsetY, 2));
-	// 移动参数初始化
+	chassis.info.rpm_ratio = 60.0f / (2.0f * PI * chassis.info.wheelRadius) * (268.0f / 17.0f);
+
+    // 移动参数初始化
 
 	// 旋转参数初始化
 	chassis.rotate.InitAngle = INIT_YAW_ANGLE; 
@@ -57,10 +63,12 @@ void Chassis_Init()
 
 void Chassis_InitPID()
 {
-	PID_Init(&chassis.rotate.pid, 0.25, 0, 9, 2, 15); // 15	PID_Init(&chassis.rotate.pid, 0.4, 0.001, 0.15, 0, 15); // 15
-	PID_SetDeadzone(&chassis.rotate.pid, 0.1);
+	PID_Init(&chassis.rotate.pid, 0.25, 0, 9, 4, 15); 
+    PID_SetDeadzone(&chassis.rotate.pid, 0.1);
+    // PID_Init(&chassis.move.real_xPID, 1, 0, 0, 0, 2000); // 15
+    // PID_Init(&chassis.move.real_yPID, 1, 0, 0, 0, 2000); // 15
+    PID_Init(&chassis.move.real_wPID, 0, 0, 0, 0, 10); // 15
 }
-
 /**底盘云台关联角度更新**/
 void Chassis_UpdateAngle(void)
 {
@@ -252,6 +260,12 @@ void Chassis_UpdateMove(void)
 {
 	float gimbalAngleSin=sin(chassis.rotate.relativeAngle*PI/180);
 	float gimbalAngleCos=cos(chassis.rotate.relativeAngle*PI/180);
+    Chassis_UpdateSlope();
+    if(chassis.rotate.mode == ChassisMode_Spin)
+    {
+        chassis.move.maxVx *= (chassis.rotate.ratio);
+        chassis.move.maxVy *= (chassis.rotate.ratio);
+    }
 
     if(chassis.pattern == Chassis_AI) //ai模式
     {
@@ -273,7 +287,6 @@ void Chassis_UpdateMove(void)
     }
 	chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
 	chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
-    Chassis_UpdateSlope();
 }
 
 /*旋转状态机*/
@@ -304,44 +317,19 @@ static void Chassis_HandleFollow(void) //底盘跟随模式
 
 static void Chassis_HandleSpin(void) //小陀螺模式
 {
-    float ratio;
     if(chassis.pattern == Chassis_control)
     {
         if(ABS(Slope_GetVal(&chassis.move.xSlope)) / chassis.move.maxVx + ABS(Slope_GetVal(&chassis.move.ySlope)) / chassis.move.maxVy > 0.05f)
-            ratio = 0.6f;
+            chassis.rotate.ratio = 0.4f;
         else
-            ratio = 1.0f;
+            chassis.rotate.ratio = 1.0f;
     }
     else
     {
-        ratio = 0.5f;
+        chassis.rotate.ratio = 0.5f;
     }
-    Slope_SetTarget(&chassis.move.spinSlope,chassis.move.maxVw * ratio);
+    Slope_SetTarget(&chassis.move.spinSlope,chassis.move.maxVw * chassis.rotate.ratio);
 	chassis.move.vw =chassis.move.spinSlope.value;
-}
-
-
-/*更新旋转斜坡和移动斜坡 工具*/
-void Spin_SpeedUpdate() //
-{
-	chassis.move.maxVw = 15.0f; // chassis.move.maxPower * 0.225f + 3.25f
-	if (chassis.move.maxVw <= 0.5f)
-	{
-		chassis.move.maxVw = 0.5f;
-	}
-
-	if (chassis.rotate.mode == ChassisMode_Spin)
-	{
-		chassis.move.maxVx = 2159.6f;//0.4985f * chassis.move.maxPower * chassis.move.maxPower - 40.994f * chassis.move.maxPower + 2159.6f
-		if (chassis.move.maxVx <= 0)
-			chassis.move.maxVx = 0;
-		chassis.move.maxVy = chassis.move.maxVx;
-	}
-	else
-	{
-		chassis.move.maxVx = 5500;
-		chassis.move.maxVy = 5500;
-	}
 }
 
 void Chassis_UpdateSlope()
@@ -349,12 +337,10 @@ void Chassis_UpdateSlope()
 	Slope_NextVal(&chassis.move.xSlope);
 	Slope_NextVal(&chassis.move.ySlope);
 	Slope_NextVal(&chassis.move.spinSlope);
-	Spin_SpeedUpdate();
 	float rotateRatio = (chassis.info.wheelbase + chassis.info.wheeltrack) / 4.0f;
-	chassis.move.maxVx = WHEELSPEED_MAX / 60.0f / (268.f / 17.f) * 2 * PI * chassis.info.wheelRadius;
-	chassis.move.maxVy = chassis.move.maxVx;
-	chassis.move.maxVw = WHEELSPEED_MAX / rotateRatio / 60.0f / (268.f / 17.f) * 2.0f * PI * chassis.info.wheelRadius * 1.0f / 1.414f;
-    chassis.move.maxVw = 15.0f;
+	chassis.move.maxVx = SET_WHEELSPEED_MAX / 60.0f / 14.88 * 2 * PI * chassis.info.wheelRadius;
+	chassis.move.maxVy = chassis.move.maxVx;//60是rpm转换成转速 14.88是减速箱减速比 2PI*R是轮子周长
+	chassis.move.maxVw = SET_WHEELSPEED_MAX / rotateRatio / 60.0f / 14.88 * 2.0f * PI * chassis.info.wheelRadius * 1.0f / 1.414f;
 }
 
 
@@ -367,7 +353,6 @@ void Task_Chassis_Callback()
 {
 	Chassis_UpdateAngle(); //更新底盘云台之间关联角
 	Chassis_ModeCtrl();	//更新模式状态机
-	Chassis_UpdateMove(); //更新底盘移动数据
     switch(chassis.rotate.mode) //更新两种旋转模式状态机
     {
         case ChassisMode_Follow:
@@ -379,30 +364,47 @@ void Task_Chassis_Callback()
         default:
             break;
 	}
-	// chassis.move.vw = (float)rcInfo.ch1*chassis.move.maxVw/-660;//暂时用拨杆控制旋转速度
+	Chassis_UpdateMove(); //更新底盘移动数据
+
 	/***全向轮解算各轮子转速****/
 	//计算旋转半径和45度角的三角函数值
     // R = 质心到轮中心的距离
     float cos45 = 0.707106f; // 即 1 / 1.414f
+    //先反解车当前真实速度
+    float real_wheel_v[4];
+    for (uint8_t i = 0; i < 4; i++) 
+    {
+        real_wheel_v[i] = chassis.motors[i].speed / chassis.info.rpm_ratio;
+    }
+    chassis.move.real_vx = (real_wheel_v[0] + real_wheel_v[1] - real_wheel_v[2] - real_wheel_v[3]) / (4.0f * cos45);
+    chassis.move.real_vy = (real_wheel_v[0] - real_wheel_v[1] + real_wheel_v[2] - real_wheel_v[3]) / (4.0f * cos45);
+    chassis.move.real_vw = (real_wheel_v[0] + real_wheel_v[1] + real_wheel_v[2] + real_wheel_v[3]) / (4.0f * chassis.info.R);
+
+    PID_SingleCalc(&chassis.move.real_xPID, chassis.move.vx, chassis.move.real_vx);//PID进行修正
+    PID_SingleCalc(&chassis.move.real_yPID, chassis.move.vy, chassis.move.real_vy);
+    PID_SingleCalc(&chassis.move.real_wPID, chassis.move.vw, chassis.move.real_vw);
     
+    static float ctrl_vx, ctrl_vy, ctrl_vw;
+    ctrl_vx = chassis.move.vx + chassis.move.real_xPID.output;
+    ctrl_vy = chassis.move.vy + chassis.move.real_yPID.output;
+    ctrl_vw = chassis.move.vw + chassis.move.real_wPID.output;
+
     float wheel_v[4];
-    wheel_v[0] = (chassis.move.vx + chassis.move.vy) * cos45 + chassis.move.vw * chassis.info.R;    //左前
-    wheel_v[1] = (chassis.move.vx - chassis.move.vy) * cos45 + chassis.move.vw * chassis.info.R;    //右前
-    wheel_v[2] = (-chassis.move.vx + chassis.move.vy) * cos45 + chassis.move.vw * chassis.info.R;    //左后
-    wheel_v[3] = (-chassis.move.vx - chassis.move.vy) * cos45 + chassis.move.vw * chassis.info.R;    //右后
+    wheel_v[0] = (ctrl_vx + ctrl_vy) * cos45 + ctrl_vw * chassis.info.R;    //左前
+    wheel_v[1] = (ctrl_vx - ctrl_vy) * cos45 + ctrl_vw * chassis.info.R;    //右前
+    wheel_v[2] = (-ctrl_vx + ctrl_vy) * cos45 + ctrl_vw * chassis.info.R;    //左后
+    wheel_v[3] = (-ctrl_vx - ctrl_vy) * cos45 + ctrl_vw * chassis.info.R;    //右后
     //转换为电机 RPM
-    float rpm_ratio = 60.0f / (2.0f * PI * chassis.info.wheelRadius) * (268.0f / 17.0f);
     for (uint8_t i = 0; i < 4; i++)
     {
-        chassis.motors[i].targetSpeed = wheel_v[i] * rpm_ratio;
-        // chassis.motors[i].targetSpeed = 0;//测试用
+        chassis.motors[i].targetSpeed = wheel_v[i] * chassis.info.rpm_ratio;
     }
 }
 
 
 void OS_ChassisCallback(void const * argument)
 {
-	osDelay(500);
+	osDelay(1500);
 	Chassis_Init();
     for(;;)
     {

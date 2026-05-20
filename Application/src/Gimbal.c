@@ -1,5 +1,6 @@
 #include "Gimbal.h"
 #include "PID.h"
+#include "USER_Detcet.h"
 #include "USER_RC.h"
 #include "gimbal.h"
 #include "imu_temp_ctrl.h"
@@ -13,7 +14,6 @@
 #define RAD_TO_DEG 57.2957795f  // 180 / PI
 #define TOP_YAW_LIMIT 45.0f
 #define BASE_YAW_J 0.04575f
-
 
 Gimbal_t gimbal;
 float visionFindAver;
@@ -36,7 +36,7 @@ void Gimbal_Init()
 	gimbal.fold_pitch.pitchMax = 95;
 	gimbal.fold_pitch.pitchMin = 5;
 
-	gimbal.fold_pitch.initAngle = 90;
+	gimbal.fold_pitch.initAngle = 95;
 	gimbal.fold_pitch.targetAngle = gimbal.fold_pitch.initAngle;
 
 	gimbal.base_yaw.initAngle = 0; // 陀螺仪yaw开机角度   *0表示yaw不动
@@ -65,7 +65,7 @@ void Gimbal_InitPID()
 	/*pitch由陀螺仪控制*/
 	PID_Init(&gimbal.top_pitch.imuPID.inner, 6, 0, 0.4, 500, 7000);
 	DEPID_Init(&gimbal.top_pitch.imuPID.deOuter, 75, 0.7, 120, 200, 7000, 0.6);//45, 0.7, 50串级pid
-	PID_Init(&gimbal.top_pitch.imuPID.outer,-0.5,-0.001,-5,1,10); //自己写位置环 mit速度环
+	PID_Init(&gimbal.top_pitch.imuPID.outer,-1,-0.001,-8,1,10); //自己写位置环 mit速度环
 
 	PID_Init(&gimbal.fold_pitch.imuPID.outer, 1.8, 0.001, 10, 1, 15);
 
@@ -74,7 +74,7 @@ void Gimbal_InitPID()
 	PID_Init(&gimbal.base_yaw.imuPID.outer,330,0.1,11000,1000,50000);//自己写位置环 mit速度环
 
 	PID_Init(&gimbal.top_yaw.imuPID.inner, 50, 0.1, 10, 7000, 30000);//270 0.3  300
-	DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 100, 0.4, 150, 100, 30000, 0.7);
+	DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 230, 0.5, 430, 100, 30000, 0.7);
 }
 
 /*云台角度更新*/
@@ -87,7 +87,7 @@ void Gimbal_UpdateAngle()
 	gimbal.top_yaw.gyro = -INS.gyro[1];
 	gimbal.top_yaw.angle = INS.yaw;
 
-	if(!init)
+	if(!init && detectList[DeviceID_TopYawMotor].isLost == 0)//当yaw不掉线且第一次进入
 	{
 		last_angle = gimbal.top_yawMotor.angle;
 		total_angle = gimbal.top_yawMotor.angle;
@@ -114,7 +114,7 @@ void Gimbal_UpdateAngle()
 		gimbal.fold_pitch.angle += 360.0f;
 
 	//更新top_pitch限幅 根据fold_pitch角度动态限幅
-	if (gimbal.fold_pitch.angle >= 70.0f && gimbal.fold_pitch.angle <= 95.0f)
+	if (gimbal.fold_pitch.angle >= 70.0f && gimbal.fold_pitch.angle <= 100.0f)
 	{
 		// fold_pitch角度在95-70度之间时，相对角度限幅为 -20到-110度
 		gimbal.top_pitch.relativePitchMax = -30.0f;
@@ -180,7 +180,7 @@ void Gimbal_UpdatePID(void)
     switch(chassis.rotate.mode)
     {
         case ChassisMode_Spin:
-            gimbal.base_yaw.imuPID.outer.maxIntegral = 6000;
+            gimbal.base_yaw.imuPID.outer.maxIntegral = 12000;
             gimbal.base_yaw.imuPID.outer.ki = 0.5f;
             break;
 
@@ -194,6 +194,7 @@ void Gimbal_UpdatePID(void)
 /****模式更改*****/
 void Gimbal_ModeCtrl(void)
 {
+	Vision_Mode = gimbal.visionEnable;
 	if(chassis.pattern == Chassis_AI)
     {
         gimbal.ctrl_mode = GimbalCtrl_AI;
@@ -238,7 +239,7 @@ void Gimbal_ModeCtrl(void)
 
 static void Gimbal_HandleRocker(void)
 {	
-	gimbal.visionEnable = true;
+	gimbal.visionEnable = false;
 	if(Rocker_Ctrl)
 		Gimbal_RockerCtrl();
 	else
@@ -349,7 +350,7 @@ void Gimbal_VisionCtrl()
 	if (yaw_diff < 0)//去绝对值
 		yaw_diff = -yaw_diff;
 	// 超过30度 base_yaw 才开始跟随
-	if (yaw_diff > 30.0f)
+	if (yaw_diff > 20.0f)
 	{
 		gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 	}
@@ -443,11 +444,16 @@ void Task_Gimbal_Callback()
 	// 计算顶pitch电机输出
 	// DEPID_CascadeCalc(&gimbal.pitch.imuPID, gimbal.pitch.targetAngle, gimbal.pitch.angle, gimbal.pitch.gyro);
 	PID_SingleCalc(&gimbal.top_pitch.imuPID.outer,gimbal.top_pitch.targetAngle,gimbal.top_pitch.angle);
-	gimbal.top_pitch.imuPID.output = - gimbal.top_pitch.imuPID.output/1000.0f  - PITCH_MASS * MASS_G * PITCH_R * arm_cos_f32(gimbal.top_pitch.angle * PI / 180.0f); ////输出除一千让PID参数乘1000方便调参  同时加入前馈
+	gimbal.top_pitch.imuPID.output = - gimbal.top_pitch.imuPID.output/1000.0f - TOP_PITCH_DIRECTION * TOP_PITCH_MASS * MASS_G * TOP_PITCH_R * arm_cos_f32(gimbal.top_pitch.angle * PI / 180.0f); ////输出除一千让PID参数乘1000方便调参  同时加入前馈
+	//此处不是outer.output 方便从纯力矩切换到mit速度模式 同时加入前馈
 	// Gimbal_Follow_IMU();
 
 	// 计算折叠pitch电机输出
 	PID_SingleCalc(&gimbal.fold_pitch.imuPID.outer,gimbal.fold_pitch.targetAngle,gimbal.fold_pitch.angle);
+	if(gimbal.fold_pitch.IMU_angle <= 60.0f)
+	gimbal.fold_pitch.imuPID.output = - gimbal.fold_pitch.imuPID.outer.output / 1000.0f - FOLD_PITCH_DIRECTION * FOLD_PITCH_MASS * MASS_G * FOLD_PITCH_R * arm_cos_f32(gimbal.fold_pitch.IMU_angle * PI / 180.0f);
+	if(gimbal.fold_pitch.IMU_angle > 60.0f && gimbal.fold_pitch.IMU_angle < 150.0f)
+	gimbal.fold_pitch.imuPID.output = - gimbal.fold_pitch.imuPID.outer.output / 1000.0f - FOLD_PITCH_DIRECTION * FOLD_PITCH_MASS * MASS_G * FOLD_PITCH_R * arm_cos_f32(60.0f * PI / 180.0f);//当折叠pitch角度较大时，由于小pitch改变(懒得算重力补偿)，所以保持在60度时的重力补偿
 }
 
 
@@ -455,7 +461,7 @@ void Task_Gimbal_Callback()
 
 void OS_GimbalCallback(void const *argument)
 {
-	osDelay(1500);
+	osDelay(1200);
 	Gimbal_Init();
 	for (;;)
 	{

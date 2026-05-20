@@ -120,6 +120,7 @@ int main(void)
 	RC_Init();
 	Beep_Init();
 	B2B_Init();
+  Detect_InitAll();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */

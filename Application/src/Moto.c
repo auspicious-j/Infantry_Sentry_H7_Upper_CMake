@@ -24,26 +24,25 @@ void Task_CANMotors_Callback()
 		Motor_CalcAngle(&shooter.triggerMotor);
 		PID_CascadeCalc(&shooter.triggerMotor.anglePID,shooter.triggerMotor.targetAngle,shooter.triggerMotor.totalAngle,shooter.triggerMotor.speed);
 
-		USER_CAN_SetMotorCurrent(&hfdcan1,0x200,shooter.triggerMotor.anglePID.output,shooter.fricMotor[0].speedPID.output,shooter.fricMotor[1].speedPID.output,0);
 		USER_CAN_SetMotorCurrent(&hfdcan2,0x1FF,gimbal.top_yaw.imuPID.output,0,0,0);
         // USER_CAN_SetMotorCurrent(&hfdcan2,0x1FF,0,0,0,0);
+        USER_CAN_SetMotorCurrent(&hfdcan1,0x200,shooter.triggerMotor.anglePID.output,shooter.fricMotor[0].speedPID.output,shooter.fricMotor[1].speedPID.output,0);
         // mit_ctrl(&hfdcan2,0x02,0,0,0,0,gimbal.pitch.imuPID.output);  //纯力矩控制
         mit_ctrl(&hfdcan2,0x01,0,gimbal.base_yaw.imuPID.outer.output,0,2,0);
-  		mit_ctrl(&hfdcan2,0x02,0,gimbal.top_pitch.imuPID.outer.output,0,1.5,0); //mit速度环 自己写位置环 +力矩前馈
-        mit_ctrl(&hfdcan2,0x03,0,gimbal.fold_pitch.imuPID.outer.output,0,1.5,0);
+  		mit_ctrl(&hfdcan2,0x02,0,gimbal.top_pitch.imuPID.outer.output,0,1.5,gimbal.top_pitch.imuPID.output); //mit速度环 自己写位置环 +力矩前馈
+        mit_ctrl(&hfdcan2,0x03,0,gimbal.fold_pitch.imuPID.outer.output,0,1.5,gimbal.fold_pitch.imuPID.output); //mit速度环 自己写位置环 +力矩前馈
         // mit_ctrl(&hfdcan2,0x01,0,0,0,0,0);
         // mit_ctrl(&hfdcan2,0x02,0,0,0,0,0);
         // mit_ctrl(&hfdcan2,0x03,0,0,0,0,0);
-
         // USER_CAN_SetMotorCurrent(&hfdcan2, 0x1FF, 0, 0, 0, 0);
 }
 
 
 void Task_ClearError_Callback()
 {
-  Motor_ClearErr(&hfdcan2,0x01,gimbal.base_yawMotor.para.state);
-  Motor_ClearErr(&hfdcan2,0x02,gimbal.fold_pitchMotor.para.state);
-  Motor_ClearErr(&hfdcan2,0x03,gimbal.top_pitchMotor.para.state);
+    Motor_ClearErr(&hfdcan2,0x01,gimbal.base_yawMotor.para.state);
+    Motor_ClearErr(&hfdcan2,0x02,gimbal.fold_pitchMotor.para.state);
+    Motor_ClearErr(&hfdcan2,0x03,gimbal.top_pitchMotor.para.state);
 }
 
 void OS_MotorCallback(void const * argument)

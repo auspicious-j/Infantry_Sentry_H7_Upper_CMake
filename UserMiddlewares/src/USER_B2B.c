@@ -1,4 +1,5 @@
 #include "USER_B2B.h"
+#include "Chassis.h"
 #include "usart.h"
 #include "cmsis_os.h"
 #include "chassis.h"
@@ -8,7 +9,6 @@
 #include "Judge.h"
 
 extern DMA_HandleTypeDef hdma_usart2_rx;
-float chassis_yaw = 0;
 
 /* 需要用到的接收变量*/
 uint8_t usart2RxBuf[256]; // 串口2缓冲区
@@ -51,15 +51,19 @@ void B2B_Receive(void)
 		{
 			chassis.motors[i].speed = (int16_t)usart2RxBuf[1 + i * 2] | (int16_t)usart2RxBuf[1 + i * 2 + 1] << 8;
 		}//轮电机当前速度	1-8
-
-		memcpy(&USER_JudgeData, &usart2RxBuf[9], sizeof(JudgeData_t));
+		SET_WHEELSPEED_MAX = (uint16_t)usart2RxBuf[9] | (uint16_t)usart2RxBuf[10] << 8; // 轮电机速度上限	9-10
 		{
-			int16_t temp;
-			uint8_t *p = (uint8_t *)&temp; 
-			p[0] = usart2RxBuf[61];
-			p[1] = usart2RxBuf[62];
-			chassis_yaw = temp / 90.0f;
-		}//裁判系统数据 9-36
+			float v;
+			uint8_t *p = (uint8_t *)&v;
+			p[0] = usart2RxBuf[11];
+			p[1] = usart2RxBuf[12];
+			p[2] = usart2RxBuf[13];
+			p[3] = usart2RxBuf[14];
+			chassis.move.maxPower = v;
+		}	//底盘吃缓冲能量后最大功率
+		
+		memcpy(&USER_JudgeData, &usart2RxBuf[15], sizeof(JudgeData_t));
+		//裁判系统数据 15-43
 		FEEDBACK = usart2RxBuf[62];
 	}
 }

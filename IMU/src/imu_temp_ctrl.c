@@ -2,14 +2,13 @@
 #include "cmsis_os.h"
 #include "BMI088driver.h"
 #include "gpio.h"
-//#include "tim.h"
 #include "kalman_filter.h"
 #include "QuaternionEKF.h"
 #include "imu_temp_ctrl.h"
 #include "MahonyAHRS.h"
 #include "controller.h"
-//#include "bsp_PWM.h"
 #include <math.h>
+#include "USER_Detcet.h"
 
 #define cheat TRUE
 #define correct_Time_define 1
@@ -110,14 +109,13 @@ void INS_Task(void)
             }
         }
     }
-
+    Detect_Update(DeviceID_IMU);
     count++;
 }
 
 void OS_IMUCallback(void const *argument)
 {
     INS_Init();
-
     for (;;)
     {
         INS_Task();

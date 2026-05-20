@@ -136,7 +136,7 @@ void MX_FREERTOS_Init(void) {
 
   /* definition and creation of IMUTask */
   osThreadDef(IMUTask, OS_IMUCallback, osPriorityNormal, 0, 2048);
-  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL); 
+  IMUTaskHandle = osThreadCreate(osThread(IMUTask), NULL);
 
   /* definition and creation of LEDTask */
   osThreadDef(LEDTask, OS_LedCallback, osPriorityBelowNormal, 0, 128);
