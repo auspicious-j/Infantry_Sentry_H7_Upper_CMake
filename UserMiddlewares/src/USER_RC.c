@@ -512,6 +512,10 @@ void Task_RC_Callback()
 {
 	// 更新按键状态
 	RC_UpdateKeys();
+	if (rcInfo.wheel > 600) // 遥控器拨轮切换摇杆控制还是鼠标控制
+		Rocker_Ctrl = true;
+	else if (rcInfo.wheel < -600)
+		Rocker_Ctrl = false;
 	/**********特殊情况处理*********************/
 	if (rcInfo.right == 2) // 遥控器右拨码开关向下，急停
 	{

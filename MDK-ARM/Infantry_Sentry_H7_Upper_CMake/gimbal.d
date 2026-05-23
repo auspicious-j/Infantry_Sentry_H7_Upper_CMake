@@ -62,9 +62,10 @@ infantry_sentry_h7_upper_cmake/gimbal.o: ..\Application\src\Gimbal.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
   ..\math\inc\PID.h ..\math\inc\SMC.h ..\math\inc\slope.h \
-  ..\math\inc\Filter.h ..\IMU\inc\imu_temp_ctrl.h \
-  ..\Application\inc\vision.h ..\Application\inc\chassis.h \
-  ..\Application\inc\shooter.h ..\Application\inc\Moto.h \
+  ..\math\inc\Filter.h ..\Application\inc\Shooter.h \
+  ..\Application\inc\Moto.h ..\UserMiddlewares\inc\USER_Detcet.h \
+  ..\IMU\inc\imu_temp_ctrl.h ..\Application\inc\vision.h \
+  ..\Application\inc\chassis.h \
   D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\arm_math.h \
   D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\arm_math_types.h \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\string.h \
@@ -88,4 +89,5 @@ infantry_sentry_h7_upper_cmake/gimbal.o: ..\Application\src\Gimbal.c \
   D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\dsp\transform_functions.h \
   D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\dsp\filtering_functions.h \
   D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\dsp\quaternion_math_functions.h \
-  D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\dsp\window_functions.h
+  D:\Program_Programing\MDK\Packs\ARM\CMSIS-DSP\1.16.2\Include\dsp\window_functions.h \
+  D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stdatomic.h

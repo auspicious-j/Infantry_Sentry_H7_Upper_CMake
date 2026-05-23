@@ -1,4 +1,5 @@
 #include "Shooter.h"
+#include "Judge.h"
 #include "USER_RC.h"
 #include "bsp_can.h"
 #include "Slope.h"
@@ -23,7 +24,7 @@ void Shooter_InitPID(void);
 //射击系统初始化
 void Shooter_Init()
 {
-	shooter.fricSpd = -5500;					//
+	shooter.fricSpd = 5500;					//
 	Slope_Init(&shooter.fricSlope, 140, 0); // 摩擦轮斜坡
 	Shooter_InitPID();						// m初始化电机pid
 	Shooter_RegisterEvents();				// 注册事件
@@ -35,8 +36,8 @@ void Shooter_Init()
 void Shooter_InitPID()
 {
 	Motor_StartCalcAngle(&shooter.triggerMotor);							 // 初始化电机角度累计
-	PID_Init(&shooter.triggerMotor.anglePID.inner, 6, 0.15, 8, 6000, 16000); // 6 0.15 8//10000
-	PID_Init(&shooter.triggerMotor.anglePID.outer, 0.8, 0, 12, 0.12, 16000); // 1.5 0 2.3   3.27 maxoutput 9000->7000
+	PID_Init(&shooter.triggerMotor.anglePID.inner,3.5,0,0,7800,10000);
+	PID_Init(&shooter.triggerMotor.anglePID.outer, 0.2,0,0.01, 0, 6000);
 
 	PID_Init(&shooter.fricMotor[0].speedPID, 25, 0, 5, 0, 16000); // 摩擦轮
 	PID_Init(&shooter.fricMotor[1].speedPID, 25, 0, 5, 0, 16000);
@@ -207,26 +208,13 @@ void Shooter_state(_Bool openflag)
 // 摇杆控制
 void Shooter_RockerCtrl()
 {	
-	static int lastwheel = 0;
 	if(chassis.pattern==Chassis_control)
 	{
-		if(rcInfo.wheel>400&&lastwheel<=400)
-		{
-			if(shooter.fricOpenFlag)
-			{
-				shooter.fricOpenFlag=0;
-				shooter.fricMotor[0].targetSpeed = 0;
-				shooter.fricMotor[1].targetSpeed = 0;
-			}
-			else
-			{
-				shooter.fricMotor[0].targetSpeed = -shooter.fricSpd;
-				shooter.fricMotor[1].targetSpeed = shooter.fricSpd;
-				shooter.fricOpenFlag=1;
-			}
-		}
-		lastwheel = rcInfo.wheel;
-		
+		if(rcInfo.right == 1)
+			shooter.fricOpenFlag = 1;
+		else
+			shooter.fricOpenFlag = 0;
+
 		if(!gimbal.visionEnable)
 		{
 			if(rcInfo.left==1&&shooter.fricOpenFlag)
@@ -242,7 +230,7 @@ void Shooter_RockerCtrl()
 void Task_Shooter_Callback()
 {	
 	static uint8_t over_speed, down_speed=0;
-//	heat=JUDGE_GetRemainHeat();
+	// heat=USER_JudgeData.shooter_barrel_heat_limit;
 	if(USER_JudgeData.initial_speed >10)
 	shooter.bullet_speed = USER_JudgeData.initial_speed;
 	
@@ -279,7 +267,7 @@ void Task_Shooter_Callback()
 	
 	if(Rocker_Ctrl)
 		Shooter_RockerCtrl();
-//	Shooter_state(shooter.fricOpenFlag);
+	Shooter_state(shooter.fricOpenFlag);
 
 	
 //堵转处理
@@ -326,7 +314,7 @@ void Task_Shooter_Callback()
 			{ 
 				if(shooter.triggerMotor.targetAngle-shooter.triggerMotor.totalAngle<MOTOR_M2006_DGR2CODE(8))
 				{
-					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*8);  //每次转动1/8圈
+					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*1);  //每次转动1/8圈
 					shooter.workState=IDLE;    
 					shooter.number +=1;  
 					osDelay(t);						
@@ -351,7 +339,7 @@ void Task_Shooter_Callback()
 			}
 	    else
 			{
-						shooter.workState=IDLE;
+					shooter.workState=IDLE;
 			}
 		break;
 
@@ -377,7 +365,6 @@ void OS_ShooterCallback(void const * argument)
 	PID_Clear(&shooter.triggerMotor.anglePID.inner);
 	PID_Clear(&shooter.triggerMotor.anglePID.outer);
 	osDelay(100);
-	
 	for(;;)
 	{
 		if(true /* JUDGE_GetShooterOutputState()||1 */)

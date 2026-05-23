@@ -6,6 +6,7 @@
 #include "Slope.h"
 #include "USER_Moto.h"
 #include "USER_RC.h"
+#include <stdint.h>
 
 typedef enum
 {
@@ -15,7 +16,6 @@ typedef enum
 
 typedef enum{
     Chassis_control,
-    Chassis_AI
 }Chassis_Pattern_e;
 
 typedef struct _Chassis
@@ -49,6 +49,7 @@ typedef struct _Chassis
 
 		float maxPower;
 		Slope xSlope, ySlope, outputSlope, chargeSlope, spinSlope; // 斜坡
+		uint8_t fastMode; // 快速模式
 	} move;
 	
 	struct
@@ -70,6 +71,11 @@ typedef struct _Chassis
 		Chassis_Mode_e mode;		// 底盘模式 小陀螺或者底盘跟随
 		float ratio;				// 旋转速度系数 占最大速度的多少
 	} rotate;
+	struct
+	{
+		float pitchTiltAngle; //底盘和地面的倾斜角
+		float rollTiltAngle;
+	}angle;
 	Chassis_Pattern_e pattern;
 } Chassis_t;
 

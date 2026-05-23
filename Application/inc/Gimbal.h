@@ -37,7 +37,7 @@ typedef enum
     GimbalState_Rocker = 0,   //人控
     GimbalState_Vision,       //视觉
     GimbalState_Scan,         //扫描
-    GimbalState_Fold          //折叠
+    // GimbalState_Fold          //折叠
 } Gimbal_State_e;
 
 typedef struct

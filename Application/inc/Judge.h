@@ -454,10 +454,10 @@ typedef struct __attribute__((packed))
 /***********以上为发给ai的**************/
 	uint16_t shooter_barrel_cooling_value;  // 冷却速度
 	uint16_t shooter_barrel_heat_limit; 		//热量限制
+	uint16_t shooter_id1_17mm_cooling_heat; //17mm枪口热量
 	uint8_t power_management_gimbal_output : 1;
 	uint8_t power_management_chassis_output : 1;
 	uint8_t power_management_shooter_output : 1;
-	uint16_t shooter_17mm_barrel_heat;			//剩余热量
 	float initial_speed;										//弹速
 	uint8_t self_color;
 }JudgeData_t;

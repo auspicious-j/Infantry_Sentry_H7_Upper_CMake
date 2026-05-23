@@ -62,7 +62,7 @@ void dm4310_fbdata(DM_motor_t *motor, uint8_t *rx_data)//大喵4310数据更新
 	  motor->para.tor = uint_to_float(motor->para.t_int, T_MIN, T_MAX, 12);  // (-10.0,10.0)
 	  motor->para.Tmos = (float)(rx_data[6]);
 	  motor->para.Tcoil = (float)(rx_data[7]);
-    motor->nowAngle = (float)motor->para.pos / M_PI * 180.0f;
+	  motor->nowAngle = (float)motor->para.pos / M_PI * 180.0f;
 }
 
 void dm4340_fbdata(DM_motor_t *motor, uint8_t *rx_data)//大喵4340数据更新
