@@ -88,7 +88,10 @@ void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length)
 void Vision_DataUpdate(void)
 {	
 	vision_transmit.header = 0x5A;
-	vision_transmit.task_mode = Vision_Mode;
+	if(gimbal.visionEnable)
+		vision_transmit.task_mode = Vision_Mode + 1;
+	else
+		vision_transmit.task_mode = Vision_Mode;
 	vision_transmit.enemy_color = 0; // 打红0 打蓝1
 	vision_transmit.bullet_speed = 22; //暂时随便给上 一个数，之后再加
 	vision_transmit.roll = INS.roll/180.0f*PI;

@@ -34,16 +34,16 @@ void B2B_Transmit()
 		{
 			usart2TxBuf[1 + i * 2] = chassis.motors[i].targetSpeed;
 			usart2TxBuf[1 + i * 2 + 1] = chassis.motors[i].targetSpeed >> 8;
-		} // 1-9 轮电机目标速度
-		usart2TxBuf[10] = ((int16_t)(chassis.move.maxVx*1000)) & 0xFF;
-    	usart2TxBuf[11] = ((int16_t)(chassis.move.maxVx*1000)) >>8 & 0xFF;
-    	usart2TxBuf[12] = ((int16_t)(chassis.move.maxVy*1000)) & 0xFF;
-    	usart2TxBuf[13] = ((int16_t)(chassis.move.maxVy*1000)) >>8 & 0xFF;
-    	usart2TxBuf[14] = ((int16_t)(chassis.move.xSlope.value*1000)) & 0xFF;
-    	usart2TxBuf[15] = ((int16_t)(chassis.move.xSlope.value*1000)) >>8 & 0xFF;
-    	usart2TxBuf[16] = ((int16_t)(chassis.move.ySlope.value*1000)) & 0xFF;
-    	usart2TxBuf[17] = ((int16_t)(chassis.move.ySlope.value*1000)) >>8 & 0xFF;
-		usart2TxBuf[18] = chassis.move.fastMode;			 // 快速模式标志	
+		} // 1-8 轮电机目标速度
+		usart2TxBuf[9] = ((int16_t)(chassis.move.maxVx*1000)) & 0xFF;
+    	usart2TxBuf[10] = ((int16_t)(chassis.move.maxVx*1000)) >>8 & 0xFF;
+    	usart2TxBuf[11] = ((int16_t)(chassis.move.maxVy*1000)) & 0xFF;
+    	usart2TxBuf[12] = ((int16_t)(chassis.move.maxVy*1000)) >>8 & 0xFF;
+    	usart2TxBuf[13] = ((int16_t)(chassis.move.xSlope.value*1000)) & 0xFF;
+    	usart2TxBuf[14] = ((int16_t)(chassis.move.xSlope.value*1000)) >>8 & 0xFF;
+    	usart2TxBuf[15] = ((int16_t)(chassis.move.ySlope.value*1000)) & 0xFF;
+    	usart2TxBuf[16] = ((int16_t)(chassis.move.ySlope.value*1000)) >>8 & 0xFF;
+		usart2TxBuf[17] = chassis.move.fastMode;			 // 快速模式标志	
 		usart2TxBuf[62] = STOPFLAG;    // 急停标志
 		usart2TxBuf[63] = 0xFE;				 // 帧尾
 

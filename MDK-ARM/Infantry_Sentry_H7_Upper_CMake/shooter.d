@@ -62,8 +62,8 @@ infantry_sentry_h7_upper_cmake/shooter.o: ..\Application\src\Shooter.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
   ..\math\inc\PID.h ..\math\inc\SMC.h ..\UserMiddlewares\inc\USER_RC.h \
-  ..\Core\Inc\usart.h \
+  ..\Core\Inc\usart.h ..\Application\inc\Judge.h \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stdio.h \
   ..\Application\inc\chassis.h ..\Application\inc\beep.h \
   ..\Application\inc\vision.h ..\Application\inc\gimbal.h \
-  ..\math\inc\Filter.h ..\Application\inc\judge.h
+  ..\math\inc\Filter.h

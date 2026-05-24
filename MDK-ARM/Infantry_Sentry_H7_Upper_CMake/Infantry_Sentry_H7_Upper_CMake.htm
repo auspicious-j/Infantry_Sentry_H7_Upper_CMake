@@ -3,7 +3,7 @@
 <title>Static Call Graph - [Infantry_Sentry_H7_Upper_CMake\Infantry_Sentry_H7_Upper_CMake.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image Infantry_Sentry_H7_Upper_CMake\Infantry_Sentry_H7_Upper_CMake.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Fri May 22 22:59:06 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Sun May 24 18:47:25 2026
 <BR><P>
 <H3>Maximum Stack Usage =        716 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1580,7 +1580,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[15f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Gimbal_Init
 </UL>
 
-<P><STRONG><a name="[293]"></a>Gimbal_ModeCtrl</STRONG> (Thumb, 90 bytes, Stack size 0 bytes, gimbal.o(.text.Gimbal_ModeCtrl))
+<P><STRONG><a name="[293]"></a>Gimbal_ModeCtrl</STRONG> (Thumb, 72 bytes, Stack size 0 bytes, gimbal.o(.text.Gimbal_ModeCtrl))
 <BR><BR>[Called By]<UL><LI><a href="#[274]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Task_Gimbal_Callback
 </UL>
 
@@ -1615,8 +1615,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Gimbal_HandleScan
 </UL>
 
-<P><STRONG><a name="[165]"></a>Gimbal_UpdateAngle</STRONG> (Thumb, 1516 bytes, Stack size 32 bytes, gimbal.o(.text.Gimbal_UpdateAngle))
-<BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = Gimbal_UpdateAngle &rArr; Filter_AverCalc
+<P><STRONG><a name="[165]"></a>Gimbal_UpdateAngle</STRONG> (Thumb, 1296 bytes, Stack size 24 bytes, gimbal.o(.text.Gimbal_UpdateAngle))
+<BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = Gimbal_UpdateAngle &rArr; Filter_AverCalc
 </UL>
 <BR>[Calls]<UL><LI><a href="#[163]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Filter_AverCalc
 </UL>
@@ -2956,7 +2956,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Heat_Limit
 </UL>
 
-<P><STRONG><a name="[22a]"></a>JUDGE_GetRemainHeat</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, judge.o(.text.JUDGE_GetRemainHeat))
+<P><STRONG><a name="[22a]"></a>JUDGE_GetRemainHeat</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, judge.o(.text.JUDGE_GetRemainHeat))
 <BR><BR>[Called By]<UL><LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Heat_Limit
 </UL>
 
@@ -3359,7 +3359,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_RcTask)
 </UL>
 <P><STRONG><a name="[d6]"></a>OS_ShooterCallback</STRONG> (Thumb, 62 bytes, Stack size 24 bytes, shooter.o(.text.OS_ShooterCallback))
-<BR><BR>[Stack]<UL><LI>Max Depth = 172<LI>Call Chain = OS_ShooterCallback &rArr; Task_Shooter_Callback &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; vListInsertEnd
+<BR><BR>[Stack]<UL><LI>Max Depth = 180<LI>Call Chain = OS_ShooterCallback &rArr; Task_Shooter_Callback &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; vListInsertEnd
 </UL>
 <BR>[Calls]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[27a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Task_Shooter_Callback
@@ -3570,7 +3570,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[d6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OS_ShooterCallback
 </UL>
 
-<P><STRONG><a name="[285]"></a>Shooter_InitPID</STRONG> (Thumb, 296 bytes, Stack size 72 bytes, shooter.o(.text.Shooter_InitPID))
+<P><STRONG><a name="[285]"></a>Shooter_InitPID</STRONG> (Thumb, 300 bytes, Stack size 72 bytes, shooter.o(.text.Shooter_InitPID))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = Shooter_InitPID &rArr; SMCInit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[288]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SMCInit
@@ -3609,7 +3609,8 @@ Global Symbols
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Slope_GetVal
 <LI><a href="#[137]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Slope_SetTarget
 </UL>
-<BR>[Called By]<UL><LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Gimbal_HandleScan
+<BR>[Called By]<UL><LI><a href="#[27a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Task_Shooter_Callback
+<LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Gimbal_HandleScan
 </UL>
 
 <P><STRONG><a name="[13a]"></a>Slope_GetVal</STRONG> (Thumb, 14 bytes, Stack size 4 bytes, slope.o(.text.Slope_GetVal))
@@ -3762,7 +3763,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[d3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OS_MotorCallback
 </UL>
 
-<P><STRONG><a name="[26e]"></a>Task_Chassis_Callback</STRONG> (Thumb, 722 bytes, Stack size 72 bytes, chassis.o(.text.Task_Chassis_Callback))
+<P><STRONG><a name="[26e]"></a>Task_Chassis_Callback</STRONG> (Thumb, 674 bytes, Stack size 72 bytes, chassis.o(.text.Task_Chassis_Callback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 344<LI>Call Chain = Task_Chassis_Callback &rArr; Chassis_UpdateMove &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; fabs
 </UL>
 <BR>[Calls]<UL><LI><a href="#[138]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PID_SingleCalc
@@ -3822,13 +3823,14 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[d5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OS_RcCallback
 </UL>
 
-<P><STRONG><a name="[27a]"></a>Task_Shooter_Callback</STRONG> (Thumb, 940 bytes, Stack size 32 bytes, shooter.o(.text.Task_Shooter_Callback))
-<BR><BR>[Stack]<UL><LI>Max Depth = 148<LI>Call Chain = Task_Shooter_Callback &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; vListInsertEnd
+<P><STRONG><a name="[27a]"></a>Task_Shooter_Callback</STRONG> (Thumb, 952 bytes, Stack size 40 bytes, shooter.o(.text.Task_Shooter_Callback))
+<BR><BR>[Stack]<UL><LI>Max Depth = 156<LI>Call Chain = Task_Shooter_Callback &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; vListInsertEnd
 </UL>
 <BR>[Calls]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[296]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Shooter_RockerCtrl
 <LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Heat_Limit
 <LI><a href="#[297]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;JUDGE_IsValid
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Shooter_state
 <LI><a href="#[122]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Beep_PlayNotes
 </UL>
 <BR>[Called By]<UL><LI><a href="#[d6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OS_ShooterCallback
@@ -4689,7 +4691,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> vision.o(.data.vision_sensor)
 </UL>
-<P><STRONG><a name="[17]"></a>Vision_DataUpdate</STRONG> (Thumb, 152 bytes, Stack size 8 bytes, vision.o(.text.Vision_DataUpdate))
+<P><STRONG><a name="[17]"></a>Vision_DataUpdate</STRONG> (Thumb, 212 bytes, Stack size 8 bytes, vision.o(.text.Vision_DataUpdate))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = Vision_DataUpdate &rArr; Append_CRC16_Check_Sum &rArr; Get_CRC16_Check_Sum
 </UL>
 <BR>[Calls]<UL><LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Append_CRC16_Check_Sum
