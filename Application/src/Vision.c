@@ -112,7 +112,6 @@ void Vision_DataTransmit(void)
 
 void Vision_ParseData(void)
 {
-	
 	//new version
 	vision.control = vision_receive.control;
 	vision.fire_thres_yaw = vision_receive.fire_thres_yaw; // 火控阈值

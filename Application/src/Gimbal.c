@@ -340,7 +340,7 @@
 		if (yaw_diff < 0)//去绝对值
 			yaw_diff = -yaw_diff;
 		// 超过30度 base_yaw 才开始跟随
-		if (yaw_diff > 20.0f)
+		if (yaw_diff > 15.0f)
 		{
 			gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 		}
