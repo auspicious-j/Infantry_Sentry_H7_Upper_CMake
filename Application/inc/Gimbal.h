@@ -4,14 +4,14 @@
 #include "USER_RC.h"
 #include "USER_Moto.h"
 #include "stdbool.h"
-#include "stdint.h"
+#include "stdint.h" 
 #include "slope.h"
 #include "PID.h"
 #include "Filter.h"
 
-#define TOP_YAW_OFFSET 3740  //此处校准小yaw 7869 2376 5115 3740
+#define TOP_YAW_OFFSET 6444  //此处校准小yaw 7869 2376 5115 3740 6444
 #define INIT_YAW_ANGLE -253.0f   //此处校准大yaw
-#define TOP_PITCH_OFFSET -1.08919096f //此处校准pitch
+#define TOP_PITCH_OFFSET 0.141943216f //此处校准pitch
 #define FOLD_PITCH_OFFSET 0.0f //此处校准fold_pitch 校准效果为 当fold_pitch竖直向上时 角度为90度
 // #define FOLD_PITCH_OFFSET 1.53913379f //此处校准fold_pitch
 

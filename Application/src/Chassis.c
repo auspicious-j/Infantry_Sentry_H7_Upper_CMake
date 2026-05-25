@@ -63,7 +63,7 @@ void Chassis_Init()
 
 void Chassis_InitPID()
 {
-	PID_Init(&chassis.rotate.pid, 0.25, 0, 9, 4, 15); 
+	PID_Init(&chassis.rotate.pid, 0.2, 0, 6, 4, 15); 
     PID_SetDeadzone(&chassis.rotate.pid, 0.1);
     // PID_Init(&chassis.move.real_xPID, 1, 0, 0, 0, 2000); // 15
     // PID_Init(&chassis.move.real_yPID, 1, 0, 0, 0, 2000); // 15
@@ -94,7 +94,7 @@ void Chassis_UpdateAngle(void)
 
 /*******模式状态机切换*********/
 
-void Chassis_ModeCtrl(void)
+void Chassis_ModeCtrl(void) 
 {
 	//决定ai控还是人控
     switch(rcInfo.right)

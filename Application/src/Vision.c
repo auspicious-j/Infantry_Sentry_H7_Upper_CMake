@@ -11,9 +11,9 @@
 #include "Crc.h"
 #include "USER_Detcet.h"
 
-VisionTransmit vision_transmit;
-VisionReceive vision_receive;
-Vision_Type vision;
+VisionTransmit vision_transmit = {0};
+VisionReceive vision_receive = {0};
+Vision_Type vision = {0};
 
 uint8_t Vision_Mode = 0; // 0为空闲，1为装甲板，2为小符，3为大符
 uint8_t cmd_fire = 0;
@@ -92,8 +92,8 @@ void Vision_DataUpdate(void)
 		vision_transmit.task_mode = Vision_Mode + 1;
 	else
 		vision_transmit.task_mode = Vision_Mode;
-	vision_transmit.enemy_color = 0; // 打红0 打蓝1
-	vision_transmit.bullet_speed = 22; //暂时随便给上 一个数，之后再加
+	vision_transmit.enemy_color = !USER_JudgeData.self_color; // 打红0 打蓝1
+	vision_transmit.bullet_speed = USER_JudgeData.initial_speed; //暂时随便给上 一个数，之后再加
 	vision_transmit.roll = INS.roll/180.0f*PI;
 	vision_transmit.pitch = INS.pitch/180.0f*PI;
 	vision_transmit.pitch_vel = -INS.gyro[0];

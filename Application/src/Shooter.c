@@ -24,7 +24,7 @@ void Shooter_InitPID(void);
 //射击系统初始化
 void Shooter_Init()
 {
-	shooter.fricSpd = 5500;					//
+	shooter.fricSpd = 5800;					//
 	Slope_Init(&shooter.fricSlope, 140, 0); // 摩擦轮斜坡
 	Shooter_InitPID();						// m初始化电机pid
 	Shooter_RegisterEvents();				// 注册事件
