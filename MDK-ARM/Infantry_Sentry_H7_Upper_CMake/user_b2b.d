@@ -65,4 +65,5 @@ infantry_sentry_h7_upper_cmake/user_b2b.o: \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stdbool.h \
   ..\Application\inc\gimbal.h ..\math\inc\Filter.h \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\string.h \
-  ..\Application\inc\vision.h ..\Application\inc\Judge.h
+  ..\Application\inc\vision.h ..\Application\inc\Judge.h \
+  ..\Application\inc\Shooter.h ..\Application\inc\Moto.h

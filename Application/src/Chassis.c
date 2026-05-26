@@ -64,7 +64,7 @@ void Chassis_Init()
 void Chassis_InitPID()
 {
 	PID_Init(&chassis.rotate.pid, 0.2, 0, 6, 4, 15); 
-    PID_SetDeadzone(&chassis.rotate.pid, 0.1);
+    // PID_SetDeadzone(&chassis.rotate.pid, 0.1);变成手动死区
     // PID_Init(&chassis.move.real_xPID, 1, 0, 0, 0, 2000); // 15
     // PID_Init(&chassis.move.real_yPID, 1, 0, 0, 0, 2000); // 15
     PID_Init(&chassis.move.real_wPID, 0, 0, 0, 0, 10); // 15
@@ -145,9 +145,8 @@ void Chassis_RegisterEvents()
 	RC_Register(Key_W | Key_A | Key_S | Key_D, CombineKey_None, KeyEvent_OnDown, Chassis_Move_KeyCallback); 
 	RC_Register(Key_W | Key_A | Key_S | Key_D, CombineKey_None, KeyEvent_OnUp, Chassis_Stop_KeyCallback);	
 	RC_Register(Key_Q | Key_E | Key_G, CombineKey_None, KeyEvent_OnDown, Chassis_SwitchMode_KeyCallback);	
-	// RC_Register(Key_V, CombineKey_None, KeyEvent_OnDown, Chassis_capOutputChange_KeyCallback);
+	RC_Register(Key_V, CombineKey_None, KeyEvent_OnDown, Chassis_capOutputChange_KeyCallback);
 	// RC_Register(Key_E | Key_R, CombineKey_Ctrl, KeyEvent_OnDown, Chassis_Return_KeyCallback);
-	// RC_Register(Key_B, CombineKey_None, KeyEvent_OnDown, Chassis_ChangeDiagonal);
 
 	//  RC_Register(Key_V,CombineKey_Shift,KeyEvent_OnDown,Chassis_capBurstChange_KeyCallback);
 	//	RC_Register(Key_Shift,CombineKey_None,KeyEvent_OnDown,Cap_On_KeyCallback);
@@ -206,6 +205,17 @@ void Chassis_Stop_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType 
 	}
 }
 
+void Chassis_capOutputChange_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	if (chassis.move.fastMode == 0)
+	{
+		chassis.move.fastMode = 1;
+		return;
+	}
+	if (chassis.move.fastMode == 1)
+		chassis.move.fastMode = 0;
+}
+
 void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
 {
 	if (chassis.rotate.mode != ChassisMode_Follow) //  Q/E/R???g? ????????????g?
@@ -221,16 +231,16 @@ void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEven
 			chassis.rotate.mode = ChassisMode_Spin;
 			Slope_SetTarget(&chassis.move.spinSlope, chassis.move.maxVw);
 			break;
-		// case Key_E: // 左转90
-		// 	if (chassis.rotate.pid.maxOutput == 0)
-		// 	{
-		// 		chassis.rotate.pid.maxOutput = 13;
-		// 	}
-		// 	else
-		// 	{
-		// 		chassis.rotate.pid.maxOutput = 0;
-		// 	}
-		// 	break;
+    case Key_E://关底盘跟随
+      if (chassis.rotate.pid.maxOutput == 0)
+      {
+        chassis.rotate.pid.maxOutput = 15;
+      }
+      else
+      {
+        chassis.rotate.pid.maxOutput = 0;
+      }
+		break;
 		default:
 			break;
 		}
@@ -278,13 +288,24 @@ static void Chassis_HandleFollow(void) //底盘跟随模式
         angle -= 360;
     if(angle < -180)
         angle += 360;
-    PID_SingleCalc(&chassis.rotate.pid, 0, -angle);
+    float deadzone = 0.1f;
+    float pid_angle = 0.0f;
+    if (angle > deadzone)
+    {
+        pid_angle = angle - deadzone;
+    }
+    else if (angle < -deadzone)
+    {
+        pid_angle = angle + deadzone;
+    }
+    else
+    {
+        pid_angle = 0.0f;
+        chassis.rotate.pid.integral = 0.0f;
+    }
+    PID_SingleCalc(&chassis.rotate.pid, 0, -pid_angle);
     chassis.move.vw = chassis.rotate.pid.output + chassis.move.spinSlope.value;
     LIMIT(chassis.move.vw,-chassis.move.maxVw,chassis.move.maxVw);
-    // if(gimbal.visionEnable == true)
-    // {
-    //     chassis.move.vw = 0;
-    // }
 }
 
 static void Chassis_HandleSpin(void) //小陀螺模式

@@ -109,6 +109,7 @@ typedef struct
 
     bool visionEnable;
     bool scan_flag;
+    bool fold_flag;
 } Gimbal_t;
 
 extern Gimbal_t gimbal;

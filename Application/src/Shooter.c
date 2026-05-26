@@ -217,12 +217,17 @@ void Shooter_RockerCtrl()
 
 		if(!gimbal.visionEnable)
 		{
-			if(rcInfo.left==1&&shooter.fricOpenFlag)
-			{
+			if(rcInfo.left == 1 && shooter.fricOpenFlag)
 				shooter.workState=TRIGGER_CONTINUE;
-			}
 			else	
 				shooter.workState=IDLE;
+		}
+		else
+		{
+			if (rcInfo.left == 1 && shooter.fricOpenFlag && rcInfo.left_last != 1) 
+				shooter.workState = TRIGGER_CLICK;
+			else
+				shooter.workState = IDLE;
 		}
 	}
 }
@@ -278,7 +283,14 @@ void Task_Shooter_Callback()
 		if(shooter.block.judgeCnt>100) //计数器达到一定值，则判定为堵转，触发反转
 		{
 			shooter.block.judgeCnt=0;
+			shooter.block.reverseCnt++;
 			shooter.workState=TRIGGER_REVERSE;
+			if (shooter.block.reverseCnt > 5)
+			{
+				shooter.block.state = 1;
+			}
+			else
+				shooter.block.state = 0;
 		}
 	}
 	else //与目标值相差小于10度，拨弹状态正常，将堵转判定计数器归零

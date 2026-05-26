@@ -200,18 +200,19 @@
 	/****模式更改*****/
 	void Gimbal_ModeCtrl(void)
 	{
-		// Vision_Mode = gimbal.visionEnable;
 		gimbal.ctrl_mode = GimbalCtrl_Control;
 		switch(gimbal.ctrl_mode)
 		{
 			case GimbalCtrl_Control: //人控模式
-				if(rcInfo.wheel > 400)
+				if(rcInfo.wheel > 400 || rcInfo.mouse.r == 1)
 				{
 					gimbal.state = GimbalState_Vision;
+					gimbal.visionEnable = true;
 				}
 				else
 				{
 					gimbal.state = GimbalState_Rocker;
+					gimbal.visionEnable = false;
 				}
 				break;
 			default:
@@ -221,7 +222,6 @@
 
 	static void Gimbal_HandleRocker(void)
 	{	
-		gimbal.visionEnable = false;
 		if(Rocker_Ctrl)
 			Gimbal_RockerCtrl();
 		else
@@ -272,10 +272,14 @@
 		//折叠pitch
 		if (rcInfo.left == 1 && rcInfo.left_last == 3 && shooter.fricOpenFlag == 0) //按键按下且之前未按下且摩擦轮未开
 		{
-			if (gimbal.fold_pitch.targetAngle < 50.0f)
+			if (gimbal.fold_pitch.targetAngle < 50.0f){
 				gimbal.fold_pitch.targetAngle = 95.0f;
-			else
+				gimbal.fold_flag  = false;
+			}
+			else {
 				gimbal.fold_pitch.targetAngle = 0.0f;
+				gimbal.fold_flag = true;
+			}
 		}
 		rcInfo.left_last = rcInfo.left;//叠史
 		// 小pitch限位：相对于fold_pitch的相对角度限制
@@ -340,7 +344,7 @@
 		if (yaw_diff < 0)//去绝对值
 			yaw_diff = -yaw_diff;
 		// 超过30度 base_yaw 才开始跟随
-		if (yaw_diff > 15.0f)
+		if (yaw_diff > 18.0f)
 		{
 			gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 		}
@@ -388,10 +392,12 @@
 		{
 			gimbal.fold_pitch.targetAngle = 5.0f;
 			gimbal.top_pitch.targetAngle = 0.0f;
+      gimbal.fold_flag = true;
 		}
 		else if(gimbal.fold_pitch.targetAngle < 15.0f)
 		{
 			gimbal.fold_pitch.targetAngle = 95.0f;
+      gimbal.fold_flag = false;
 		}
 	}
 	/**************freertos任务**************/

@@ -53,7 +53,7 @@ void Vision_RegisterEvents()
 // 切换视觉模式
 void Vision_Change_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
 {
-	Vision_Mode = (Vision_Mode+1) % 4;
+	Vision_Mode = (Vision_Mode+1) % 3;
 }
 
 //接收来自视觉的信息
@@ -80,7 +80,7 @@ void Vision_DataReceive(uint8_t *read_from_usart, uint32_t length)
 		//将数据存入接收buffer
 		memcpy(&vision_receive, read_from_usart, sizeof(vision_receive));
 		Vision_ParseData();
-    Detect_Update(DeviceID_PC);
+    	Detect_Update(DeviceID_PC);
 	}
 }
 
@@ -91,7 +91,7 @@ void Vision_DataUpdate(void)
 	if(gimbal.visionEnable)
 		vision_transmit.task_mode = Vision_Mode + 1;
 	else
-		vision_transmit.task_mode = Vision_Mode;
+		vision_transmit.task_mode = 0;
 	vision_transmit.enemy_color = !USER_JudgeData.self_color; // 打红0 打蓝1
 	vision_transmit.bullet_speed = USER_JudgeData.initial_speed; //暂时随便给上 一个数，之后再加
 	vision_transmit.roll = INS.roll/180.0f*PI;
@@ -125,11 +125,6 @@ void Vision_ParseData(void)
 	vision.top_pitch_vel = vision_receive.pitch_vel;
 	vision.top_pitch_acc = vision_receive.pitch_acc;
 	vision.bullet_id = vision_receive.bullet_id;
-	//键鼠开自瞄
-	if (rcInfo.mouse.r == 1 && visionFindAver>=0.5f)
-	{
-		gimbal.visionEnable = true;
-	}
 	//下位机火控
 	if(ABS(gimbal.top_pitch.angle/180*PI-vision.target_top_pitch) < vision.fire_thres_pitch && ABS(gimbal.top_yaw.angle/180*PI-vision.target_top_yaw)<vision.fire_thres_yaw){
 		cmd_fire = 1;

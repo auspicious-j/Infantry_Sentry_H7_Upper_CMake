@@ -90,6 +90,8 @@ void Chassis_Move_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType 
 void UI_UPdate(KeyType key, KeyCombineType combine, KeyEventType event);
 void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 void Chassis_Stop_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Chassis_capOutputChange_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+
 void Gimbal_RegisterEvents();
 
 
