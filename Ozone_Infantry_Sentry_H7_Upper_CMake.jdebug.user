@@ -1,28 +1,21 @@
 
+
 GraphedExpression="((gimbal).top_pitch).targetAngle", Color=#a00909
 GraphedExpression="((gimbal).top_pitch).angle", Color=#09a01b
-OpenDocument="Judge.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Application/src/Judge.c", Line=0
-OpenDocument="usbd_core.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c", Line=209
-OpenDocument="main.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Core/Src/main.c", Line=52
-OpenDocument="Vision.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Application/src/Vision.c", Line=78
-OpenDocument="tasks.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Middlewares/Third_Party/FreeRTOS/Source/tasks.c", Line=3635
-OpenDocument="Shooter.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Application/src/Shooter.c", Line=3
-OpenDocument="Chassis.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Application/src/Chassis.c", Line=93
-OpenDocument="Gimbal.c", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/Application/src/Gimbal.c", Line=18
-OpenDocument="PID.h", FilePath="D:/Keil_Projects/STM32/Sentry_eat_Infantry/Infantry_Sentry_H7_Upper_CMake/math/inc/PID.h", Line=0
+OpenDocument="main.c", FilePath="/Users/auspicious/projects/STM32/Infantry_Sentry_H7_Upper_CMake/Core/Src/main.c", Line=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=444, h=481, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=444, h=479, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Data Sampling", DockArea=RIGHT, x=0, y=1, w=709, h=257, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
-OpenWindow="Timeline", DockArea=RIGHT, x=0, y=0, w=709, h=703, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="1 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=1, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="240;0", PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="584;-55", CodeGraphLegendShown=0, CodeGraphLegendPosition="598;0"
-OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=2560, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[438;116;100;116;1043]
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=362, h=287, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=362, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=RIGHT, x=0, y=1, w=509, h=191, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=RIGHT, x=0, y=0, w=509, h=369, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="1 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=1, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="40;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="309;0", CodeGraphLegendShown=0, CodeGraphLegendPosition="329;0"
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1470, h=212, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[438;116;100;116;878]
 TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" ((gimbal).top_pitch).targetAngle";" ((gimbal).top_pitch).angle"], ColWidths=[100;100;100;100]
-TableHeader="Data Sampling Setup", SortCol="Average", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[160;100;100;100;100;100;100;107;107]
+TableHeader="Data Sampling Setup", SortCol="Average", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[160;100;100;112;119;100;100;100;100]
 TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Refresh"], ColWidths=[173;168;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;26]
 WatchedExpression="gimbal", RefreshRate=1, Window=Watched Data 1
 WatchedExpression="chassis", RefreshRate=5, Window=Watched Data 1
 WatchedExpression="vision_receive", Window=Watched Data 1

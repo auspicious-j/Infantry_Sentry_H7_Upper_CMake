@@ -36,6 +36,7 @@
 #include "bsp_dwt.h"
 #include "Judge.h"
 #include "USER_RC.h"
+#include "SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -118,9 +119,10 @@ int main(void)
 	DWT_Init(480);
 	CAN_Init();
 	RC_Init();
-	Beep_Init();
+	// Beep_Init();
 	B2B_Init();
   Detect_InitAll();
+  SEGGER_SYSVIEW_Conf();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
