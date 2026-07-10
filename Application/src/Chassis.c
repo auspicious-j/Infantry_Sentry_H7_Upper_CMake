@@ -55,7 +55,7 @@ void Chassis_Init()
 
     Filter_InitAverFilter(&gimbal.Mouse.yawFilter, 10); //
     Filter_InitAverFilter(&gimbal.Mouse.pitchFilter, 2);
-    Filter_InitAverFilter(&gimbal.visionFilter.find, 25); // 
+    Filter_InitAverFilter(&gimbal.visionFilter.find, 50); // 
 
 	Chassis_InitPID();
     Chassis_RegisterEvents();
@@ -80,8 +80,8 @@ void Chassis_UpdateAngle(void)
     if(chassis.rotate.InitAngle < 0)
         chassis.rotate.InitAngle += 360;
 
-    uint16_t yaw_online = 0; //判断云台电机是否离线
-    if(yaw_online == 0)
+    uint16_t yaw_online = 1; //判断云台电机是否离线
+    if(yaw_online == 1)
     {
         chassis.rotate.nowAngle = gimbal.base_yawMotor.nowAngle;
         chassis.rotate.relativeAngle = chassis.rotate.nowAngle - chassis.rotate.InitAngle;

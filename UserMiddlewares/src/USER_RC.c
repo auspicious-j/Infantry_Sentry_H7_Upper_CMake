@@ -20,7 +20,7 @@ RC_TypeDef rcInfo = {0};//统一接口
 uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
 Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
 
-bool Rocker_Ctrl = true;
+bool Rocker_Ctrl = false;
 
 int rc_true_flag;
 
@@ -530,7 +530,7 @@ void Task_RC_Callback()
 		STOPFLAG = 1;
     	B2B_Transmit();
 		osThreadResume(ErrorTaskHandle); // 恢复错误任务 饿死其他任务
-	}
+	} 
 }
 
 /************************freertos任务****************************/
@@ -544,6 +544,7 @@ void OS_RcCallback(void const *argument)
 		{
 			HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 			__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
+      Judge_UpdateKeys();
 		}
 		Task_RC_Callback();
 		osDelay(15);

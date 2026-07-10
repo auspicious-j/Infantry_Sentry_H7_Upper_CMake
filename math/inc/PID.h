@@ -12,49 +12,78 @@
 typedef struct _PID
 {
 	float kp,ki,kd;
-	float error,lastError;//Îó²î¡¢ÉÏ´ÎÎó²î
-	float integral,maxIntegral;//»ı·Ö¡¢»ı·ÖÏŞ·ù
-	float output,maxOutput;//Êä³ö¡¢Êä³öÏŞ·ù
-	float deadzone;//ËÀÇø
+	float error,lastError;//è¯¯å·®ã€ä¸Šæ¬¡è¯¯å·®
+	float integral,maxIntegral;//ç§¯åˆ†ã€ç§¯åˆ†é™å¹…
+	float output,maxOutput;//è¾“å‡ºã€è¾“å‡ºé™å¹…
+	float deadzone;//æ­»åŒº
 }PID;
 
-/*¶¨Òå½á¹¹ÌåºÍ¹«ÓÃÌå*/
+/*å®šä¹‰ç»“æ„ä½“å’Œå…¬ç”¨ä½“*/
 typedef struct _DEPID
 {
-  float kp;     //±ÈÀıÏµÊı
-  float ki;      //»ı·ÖÏµÊı
-  float kd;    //Î¢·ÖÏµÊı
-  float lasterror;     //Ç°Ò»ÅÄÆ«²î
-	float error;				//µ±Ç°error
-  float output;     //Êä³öÖµ
-  float integral;   //»ı·ÖÖµ
-  float derivative;      //Î¢·ÖÏî
-  float lastPv;     //Ç°Ò»ÅÄµÄ²âÁ¿Öµ
-  float gama;      //Î¢·ÖÏÈĞĞÂË²¨ÏµÊı
-	float maxOutput; //Êä³öÏŞ·ù
-	float maxIntegral;//»ı·ÖÏŞ·ù
+  float kp;     //æ¯”ä¾‹ç³»æ•°
+  float ki;      //ç§¯åˆ†ç³»æ•°
+  float kd;    //å¾®åˆ†ç³»æ•°
+  float lasterror;     //å‰ä¸€æ‹åå·®
+	float error;				//å½“å‰error
+  float output;     //è¾“å‡ºå€¼
+  float integral;   //ç§¯åˆ†å€¼
+  float derivative;      //å¾®åˆ†é¡¹
+  float lastPv;     //å‰ä¸€æ‹çš„æµ‹é‡å€¼
+  float gama;      //å¾®åˆ†å…ˆè¡Œæ»¤æ³¢ç³»æ•°
+	float maxOutput; //è¾“å‡ºé™å¹…
+	float maxIntegral;//ç§¯åˆ†é™å¹…
 }DEPID;
 
 typedef struct _CascadePID
 {
-	PID inner;//ÄÚ»·
-	PID outer;//Íâ»·
-	DEPID deOuter;//Íâ»·Î¢·ÖÏÈĞĞ
-	float output;//´®¼¶Êä³ö£¬µÈÓÚinner.output
+	PID inner;//å†…ç¯
+	PID outer;//å¤–ç¯
+	DEPID deOuter;//å¤–ç¯å¾®åˆ†å…ˆè¡Œ
+	float output;//ä¸²çº§è¾“å‡ºï¼Œç­‰äºinner.output
 }CascadePID;
 
 typedef struct
 {
-    float kp;            // Î»ÖÃ¸Õ¶È
-    float kd;            // ËÙ¶È×èÄá
+    float kp;            // ä½ç½®åˆšåº¦
+    float kd;            // é€Ÿåº¦é˜»å°¼
 
-    float deadzone;      // ËÀÇø
+    float deadzone;      // æ­»åŒº
 
-    float torque_ff;     // Ç°À¡Á¦¾Ø T_ff (Nm)
+    float torque_ff;     // å‰é¦ˆåŠ›çŸ© T_ff (Nm)
 
-    float maxTorque;     // ×î´óÁ¦¾ØÏŞÖÆ
-    float outputTorque;  // Êä³öÁ¦¾Ø T_ref
+    float maxTorque;     // æœ€å¤§åŠ›çŸ©é™åˆ¶
+    float outputTorque;  // è¾“å‡ºåŠ›çŸ© T_ref
 } PD_Controller;
+
+typedef struct
+{
+	float kp,ki,kd;
+	float error,lastError;
+	float integral,maxIntegral;
+	float output,maxOutput;
+	float deadzone;
+	float K;
+}MPC_PID;
+typedef struct
+{
+	float kp,ki,kd;
+	float error,lastError;
+	float integral,maxIntegral;
+	float output,maxOutput;
+	float derivative;      //å¾®åˆ†é¡¹
+  float lastPv;     //å‰ä¸€æ‹çš„æµ‹é‡å€¼
+  float gama;      //å¾®åˆ†å…ˆè¡Œæ»¤æ³¢ç³»æ•°
+	float deadzone;
+	float K;
+}MPC_DEPID;
+typedef struct
+{
+	MPC_PID inner;
+	MPC_PID mpcOuter;
+	MPC_DEPID mpcdeOuter;
+	float output;
+}CascadeMPC_PID;
 
 
 void PID_Init(PID *pid,float p,float i,float d,float maxSum,float maxOut);
@@ -69,5 +98,11 @@ void PIDRegulation(DEPID *vPID,float reference, float feedback, float differenti
 void DEPID_CascadeCalc(CascadePID *pid,float angleRef,float angleFdb,float speedFdb);
 void PD_Init(PD_Controller *pd,float kp,float kd,float maxTorque);
 void PD_ParallelCalc(PD_Controller *pd,float p_des,float v_des,float p_meas,float v_meas);
+void MPC_PID_Init(MPC_PID *mpc_pid,float p,float i,float d,float maxI,float maxOut,float k);
+void MPC_DEPID_Init(MPC_DEPID *pid,float p,float i,float d,float maxI,float maxOut,float gama,float k);
+void MPC_PID_SingleCalc(MPC_PID *mpc_pid,float reference,float feedback,float target);
+void MPC_PIDRegulation(MPC_DEPID *vPID,float reference, float feedback, float differentiation,float target);
+void MPC_PID_CascadeCalc(CascadeMPC_PID *mpc_pid,float angleRef,float angleFdb,float speedFdb,float speedTarget,float target);
+void MPC_DEPID_CascadeCalc(CascadeMPC_PID *mpc_pid,float angleRef,float angleFdb,float speedFdb,float speedTarget,float target);
 
 #endif

@@ -52,6 +52,7 @@ void Shooter_state(_Bool openflag);
 void Shooter_RegisterEvents();
 void Shooter_SwitchState_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 void Shooter_StartFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+void Shooter_StopFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 void Shooter_IncFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 void Shooter_DecFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 

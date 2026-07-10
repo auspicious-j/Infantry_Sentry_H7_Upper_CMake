@@ -58,6 +58,8 @@ void Shooter_RegisterEvents()
 	RC_Register(Key_Left, CombineKey_None, KeyEvent_OnLongPress, Shooter_SwitchState_KeyCallback);
 	// F开启摩擦轮
 	RC_Register(Key_F, CombineKey_None, KeyEvent_OnDown, Shooter_StartFric_KeyCallback);
+	//G关闭摩擦轮
+	RC_Register(Key_G,CombineKey_None,KeyEvent_OnDown,Shooter_StopFric_KeyCallback);
 	// SHIFT+Q提高100摩擦轮转速
 	RC_Register(Key_Q, CombineKey_Shift, KeyEvent_OnDown, Shooter_IncFricSpeed_KeyCallback);
 	// SHIFT+E减小100摩擦轮转速
@@ -97,18 +99,16 @@ void Shooter_SwitchState_KeyCallback(KeyType key, KeyCombineType combine, KeyEve
 // 手动打开/关闭摩擦轮
 void Shooter_StartFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
 {
-	if(shooter.fricOpenFlag)
-	{
-		shooter.fricOpenFlag=0;
-		shooter.fricMotor[0].targetSpeed = 0;
-		shooter.fricMotor[1].targetSpeed = 0;
-	}
-	else
-	{
-		shooter.fricMotor[0].targetSpeed = -shooter.fricSpd;
-		shooter.fricMotor[1].targetSpeed = shooter.fricSpd;
-		shooter.fricOpenFlag=1;
-	}
+	shooter.fricMotor[0].targetSpeed = -shooter.fricSpd;
+	shooter.fricMotor[1].targetSpeed = shooter.fricSpd;
+	shooter.fricOpenFlag=1;
+}
+
+void Shooter_StopFric_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
+{
+	shooter.fricOpenFlag=0;
+	shooter.fricMotor[0].targetSpeed = 0;
+	shooter.fricMotor[1].targetSpeed = 0;
 }
 
 void Shooter_IncFricSpeed_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event)
@@ -204,7 +204,7 @@ void Shooter_state(_Bool openflag)
 }
 
 
-
+uint8_t shootflag = 0;
 // 摇杆控制
 void Shooter_RockerCtrl()
 {	
@@ -224,10 +224,13 @@ void Shooter_RockerCtrl()
 		}
 		else
 		{
-			if (rcInfo.left == 1 && shooter.fricOpenFlag && rcInfo.left_last != 1) 
+			if (rcInfo.left == 1 && shooter.fricOpenFlag && shootflag == 0) 
+      {
 				shooter.workState = TRIGGER_CLICK;
-			else
-				shooter.workState = IDLE;
+        shootflag = 1;
+      }
+      else if(rcInfo.left != 1)
+        shootflag = 0;
 		}
 	}
 }
@@ -310,7 +313,7 @@ void Task_Shooter_Callback()
 					shooter.triggerMotor.targetAngle+=MOTOR_M2006_DGR2CODE(360*1/8.0*1);  //每次转动1/8圈
 					shooter.workState=IDLE;    
 					shooter.number +=1;       
-					osDelay(t);	
+					osDelay(t);
 				}
 			}
 			else

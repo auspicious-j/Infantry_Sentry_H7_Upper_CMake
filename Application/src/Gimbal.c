@@ -1,4 +1,5 @@
 	#include "Gimbal.h"
+  #include "Filter.h"
 	#include "PID.h"
 	#include "Shooter.h"
 	#include "USER_Detcet.h"
@@ -47,6 +48,8 @@
 
 
 		Filter_InitAverFilter(&gimbal.visionFilter.find,50);
+		Filter_InitAverFilter(&gimbal.Mouse.yawFilter, 10); //
+		Filter_InitAverFilter(&gimbal.Mouse.pitchFilter, 2);
 		gimbal.visionEnable = false;
 		gimbal.state = GimbalState_Rocker;
 
@@ -76,8 +79,8 @@
 
 		PID_Init(&gimbal.top_yaw.imuPID.inner, 50, 0.1, 10, 7000, 30000);//270 0.3  300
 		DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 280, 0.5, 480, 100, 30000, 0.7);
-//		DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 30, 0.5, 70, 100, 30000, 0.7);
-
+		MPC_PID_Init(&gimbal.top_yaw.imuPID_MPC.inner, 50, 0.1, 10, 7000, 30000, 0);
+		MPC_DEPID_Init(&gimbal.top_yaw.imuPID_MPC.mpcdeOuter, 280, 0.5, 480, 100, 30000, 0.8, 0);
 	}
 
 	/*云台角度更新*/
@@ -118,7 +121,7 @@
 			gimbal.fold_pitch.angle += 360.0f;
 
 		//更新top_pitch限幅 根据fold_pitch角度动态限幅
-		if (gimbal.fold_pitch.angle >= 60.0f && gimbal.fold_pitch.angle <= 100.0f)
+		if (gimbal.fold_pitch.angle >= 60.0f && gimbal.fold_pitch.angle <= 110.0f)
 		{
 			// fold_pitch角度在95-60度之间时，相对角度限幅为 60到-13度
 			gimbal.top_pitch.relativePitchMax = 60.0f;
@@ -240,27 +243,31 @@
 		if(vision.control)
 			Gimbal_VisionCtrl();
 		else
-			Gimbal_RockerCtrl();
-	}
-
-	static void Gimbal_HandleScan(void)
-	{
-		gimbal.visionEnable = true;
-		if(vision.control)
 		{
-			shooter.fricOpenFlag = 1;
-			Shooter_state(shooter.fricOpenFlag);
-			Gimbal_VisionCtrl();
-		}
-		else
-		{
-			shooter.fricOpenFlag = 0;
-			Shooter_state(shooter.fricOpenFlag);
-			Gimbal_ScanCtrl();
+			if(Rocker_Ctrl)
+				Gimbal_RockerCtrl();
+			else
+				Gimbal_MouseCtrl();
 		}
 	}
 
-	float a;
+	// static void Gimbal_HandleScan(void)
+	// {
+	// 	gimbal.visionEnable = true;
+	// 	if(vision.control)
+	// 	{
+	// 		shooter.fricOpenFlag = 1;
+	// 		Shooter_state(shooter.fricOpenFlag);
+	// 		Gimbal_VisionCtrl();
+	// 	}
+	// 	else
+	// 	{
+	// 		shooter.fricOpenFlag = 0;
+	// 		Shooter_state(shooter.fricOpenFlag);
+	// 		Gimbal_ScanCtrl();
+	// 	}
+	// }
+
 	/*******五种控制函数*********/
 	void Gimbal_RockerCtrl()
 	{
@@ -273,7 +280,7 @@
 		if (rcInfo.left == 1 && rcInfo.left_last == 3 && shooter.fricOpenFlag == 0) //按键按下且之前未按下且摩擦轮未开
 		{
 			if (gimbal.fold_pitch.targetAngle < 50.0f){
-				gimbal.fold_pitch.targetAngle = 95.0f;
+				gimbal.fold_pitch.targetAngle = 100.0f;
 				gimbal.fold_flag  = false;
 			}
 			else {
@@ -297,7 +304,7 @@
 	// 	LIMIT(relativeAngle, gimbal.top_pitch.relativePitchMin, gimbal.top_pitch.relativePitchMax);
 	// 	gimbal.top_pitch.targetAngle = gimbal.fold_pitch.IMU_angle + relativeAngle;  //翻译一下就是限幅过的relative angle
 	// }
-
+float yaw_diff = 0;
 	void Gimbal_MouseCtrl()
 	{	
 		if(gimbal.visionEnable == true){
@@ -317,8 +324,6 @@
 
 	void Gimbal_VisionCtrl()
 	{
-		if (isnan(vision.top_yaw) || isnan(vision.top_pitch))
-			return;
 		int yaw_cycle;
 		if ((gimbal.top_yaw.targetAngle / 360.f) > 0)
 			yaw_cycle = (gimbal.top_yaw.targetAngle / 360.f) + 0.5f;
@@ -336,15 +341,15 @@
 	
 		//以下为跟随部分
 		gimbal.top_yaw.targetAngle = target_yaw;	// top_yaw 永远跟随视觉
-		float yaw_diff = gimbal.top_yaw.totalAngle - gimbal.base_yaw.totalAngle;	// 计算 base_yaw 和 top_yaw 当前角度差
+		yaw_diff = gimbal.top_yaw.angle - gimbal.base_yaw.angle;	// 计算 base_yaw 和 top_yaw 当前角度差
 		while (yaw_diff > 180.f)	// 角度归一化
 		yaw_diff -= 360.f;
 		while (yaw_diff < -180.f)
 		yaw_diff += 360.f;
 		if (yaw_diff < 0)//去绝对值
 			yaw_diff = -yaw_diff;
-		// 超过30度 base_yaw 才开始跟随
-		if (yaw_diff > 18.0f)
+		// 超过30度 base_yaw 才开始跟随 
+		if (yaw_diff > 18.0f || gimbal.fold_flag == true)
 		{
 			gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 		}
@@ -352,33 +357,33 @@
 		LIMIT(gimbal.top_pitch.targetAngle, gimbal.top_pitch.pitchMin, gimbal.top_pitch.pitchMax);
 	}
 
-	void Gimbal_ScanCtrl()
-	{
-		//纯累加 dt = 1ms
-		float yaw_delta = gimbal.scan.yaw_speed * 0.001f;
-		gimbal.top_yaw.targetAngle += yaw_delta;
-		gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
+	// void Gimbal_ScanCtrl()
+	// {
+	// 	//纯累加 dt = 1ms
+	// 	float yaw_delta = gimbal.scan.yaw_speed * 0.001f;
+	// 	gimbal.top_yaw.targetAngle += yaw_delta;
+	// 	gimbal.base_yaw.targetAngle = gimbal.top_yaw.targetAngle;
 
-		gimbal.scan.pitch_phase += 2.0f * PI * gimbal.scan.pitch_freq * 0.001f;
-		if (gimbal.scan.pitch_phase > 2.0f * PI) {
-			gimbal.scan.pitch_phase -= 2.0f * PI;
-		}
+	// 	gimbal.scan.pitch_phase += 2.0f * PI * gimbal.scan.pitch_freq * 0.001f;
+	// 	if (gimbal.scan.pitch_phase > 2.0f * PI) {
+	// 		gimbal.scan.pitch_phase -= 2.0f * PI;
+	// 	}
 
-		float current_ideal_pitch = gimbal.scan.pitch_amp * arm_sin_f32(gimbal.scan.pitch_phase) + gimbal.scan.pitch_offset;
+	// 	float current_ideal_pitch = gimbal.scan.pitch_amp * arm_sin_f32(gimbal.scan.pitch_phase) + gimbal.scan.pitch_offset;
 
-		if (gimbal.scan.init_flag) {
-			gimbal.scan.last_ideal_pitch = current_ideal_pitch;
-			gimbal.scan.init_flag = 0;
-		}
-		float pitch_wave_delta = current_ideal_pitch - gimbal.scan.last_ideal_pitch;
+	// 	if (gimbal.scan.init_flag) {
+	// 		gimbal.scan.last_ideal_pitch = current_ideal_pitch;
+	// 		gimbal.scan.init_flag = 0;
+	// 	}
+	// 	float pitch_wave_delta = current_ideal_pitch - gimbal.scan.last_ideal_pitch;
 
-		float error = current_ideal_pitch - gimbal.top_pitch.targetAngle;
-		float convergence_step = error * 0.02f; 
+	// 	float error = current_ideal_pitch - gimbal.top_pitch.targetAngle;
+	// 	float convergence_step = error * 0.02f; 
 
-		gimbal.top_pitch.targetAngle += pitch_wave_delta + convergence_step;
+	// 	gimbal.top_pitch.targetAngle += pitch_wave_delta + convergence_step;
 
-		gimbal.scan.last_ideal_pitch = current_ideal_pitch;
-	}
+	// 	gimbal.scan.last_ideal_pitch = current_ideal_pitch;
+	// }
 
 	/********依旧键鼠***********/
 	void Gimbal_RegisterEvents()
@@ -392,12 +397,12 @@
 		{
 			gimbal.fold_pitch.targetAngle = 5.0f;
 			gimbal.top_pitch.targetAngle = 0.0f;
-      gimbal.fold_flag = true;
+     	    gimbal.fold_flag = true;
 		}
 		else if(gimbal.fold_pitch.targetAngle < 15.0f)
 		{
-			gimbal.fold_pitch.targetAngle = 95.0f;
-      gimbal.fold_flag = false;
+			gimbal.fold_pitch.targetAngle = 100.0f;
+    		gimbal.fold_flag = false;
 		}
 	}
 	/**************freertos任务**************/
@@ -414,9 +419,9 @@
 			case GimbalState_Vision:	
 				Gimbal_HandleVision();
 				break;
-			case GimbalState_Scan:
-				Gimbal_HandleScan();
-				break;
+			// case GimbalState_Scan:
+			// 	Gimbal_HandleScan();
+			// 	break;
 			// case GimbalState_Fold:
 			// 	Gimbal_HandleFold();
 			// 	break;
@@ -426,11 +431,12 @@
 
 		//计算小yaw电机输出
 		DEPID_CascadeCalc(&gimbal.top_yaw.imuPID,gimbal.top_yaw.targetAngle,gimbal.top_yaw.totalAngle,gimbal.top_yaw.gyro);
-		gimbal.top_yaw.imuPID.output = gimbal.top_yaw.imuPID.output;
+		MPC_DEPID_CascadeCalc(&gimbal.top_yaw.imuPID_MPC, gimbal.top_yaw.targetAngle, gimbal.top_yaw.totalAngle, gimbal.top_yaw.gyro, vision_receive.yaw_vel, vision_receive.yaw_acc);
+		gimbal.top_yaw.imuPID.output = gimbal.top_yaw.imuPID_MPC.output;
 		
 		// 计算大yaw电机输出
-		// DEPID_CascadeCalc(&gimbal.base_yaw.imuPID, gimbal.base_yaw.targetAngle, gimbal.base_yaw.totalAngle, gimbal.base_yaw.gyro);
-		// gimbal.base_yaw.imuPID.output = -gimbal.base_yaw.imuPID.output/1000.0f - 2.0f * (gimbal.top_yaw.imuPID.output / 30000.0f) - forwardfeed(gimbal.base_yaw.imuPID.outer.output / 1000.0f);//因为电机倒置 所以输出反向 输出除一千让PID参数乘1000方便调参 再加入前馈
+//		DEPID_CascadeCalc(&gimbal.base_yaw.imuPID, gimbal.base_yaw.targetAngle, gimbal.base_yaw.totalAngle, gimbal.base_yaw.gyro);
+//		gimbal.base_yaw.imuPID.output = -gimbal.base_yaw.imuPID.output/1000.0f - 2.0f * (gimbal.top_yaw.imuPID.output / 30000.0f);// - forwardfeed(gimbal.base_yaw.imuPID.outer.output / 1000.0f);//因为电机倒置 所以输出反向 输出除一千让PID参数乘1000方便调参 再加入前馈
 		PID_SingleCalc(&gimbal.base_yaw.imuPID.outer,gimbal.base_yaw.targetAngle,gimbal.base_yaw.totalAngle);  //自己写位置环 速度环用mit的
 		gimbal.base_yaw.imuPID.outer.output = gimbal.base_yaw.imuPID.outer.output / 1000.0f;
 
