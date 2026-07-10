@@ -37,6 +37,16 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
+set(SYSTEMVIEW_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/config
+)
+
+# FreeRTOSConfig.h includes the SystemView FreeRTOS trace hooks.
+target_include_directories(stm32cubemx INTERFACE
+    ${SYSTEMVIEW_INCLUDE_DIRS}
+)
+
 # Collect user sources
 file(GLOB_RECURSE USER_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/IMU/*.c"
@@ -44,6 +54,15 @@ file(GLOB_RECURSE USER_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/math/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/UserMiddlewares/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/Application/*.c"
+)
+
+set(SYSTEMVIEW_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/SEGGER_SYSVIEW.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/SEGGER_SYSVIEW_FreeRTOS.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/SEGGER_RTT.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/SEGGER_RTT_printf.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/SEGGER_RTT_ASM_ARMv7M.S
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemView/config/SEGGER_SYSVIEW_Config_FreeRTOS.c
 )
 
 # Link directories setup
@@ -55,6 +74,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${USER_SOURCES}
+    ${SYSTEMVIEW_SOURCES}
 )
 
 # Add include paths
@@ -77,6 +97,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Application
     ${CMAKE_CURRENT_SOURCE_DIR}/Application/inc
+
+    # SystemView
+    ${SYSTEMVIEW_INCLUDE_DIRS}
 
     # CMSIS-DSP include paths   
     ${CMAKE_SOURCE_DIR}/Middlewares/ST/ARM/dsp/Include

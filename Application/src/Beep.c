@@ -82,10 +82,10 @@ void OS_BeepCallback(void const * argument)
 {
   //蜂鸣器播放启动声 [do re me so la(升)]
 //	Beep_PlayNotes((Note[]){{T_M1,D_Sixteenth},{T_M2,D_Sixteenth},{T_M3,D_Sixteenth},{T_M5,D_Sixteenth},{T_M6,D_Sixteenth},{T_None,D_Quarter}},6);
-	Beep_PlayNotes((Note[]){{T_M1,D_Sixteenth},{T_H1,D_Sixteenth},{T_None,D_Quarter}},3);
+	// Beep_PlayNotes((Note[]){{T_M1,D_Sixteenth},{T_H1,D_Sixteenth},{T_None,D_Quarter}},3);
   for(;;)
   {
-    Task_Beep_Callback();
+    // Task_Beep_Callback();
     osDelay(20);
   }
 }

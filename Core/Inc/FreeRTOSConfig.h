@@ -45,6 +45,7 @@
 
 /* USER CODE BEGIN Includes */
 /* Section where include file can be added */
+#include "SEGGER_SYSVIEW_FreeRTOS.h"
 /* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
@@ -134,6 +135,8 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
+#define configUSE_TRACE_FACILITY                 1      //手动添加 用于查看任务调度
+#define INCLUDE_pcTaskGetTaskName 1
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */
