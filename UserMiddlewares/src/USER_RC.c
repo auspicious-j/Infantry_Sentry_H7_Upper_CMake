@@ -544,7 +544,7 @@ void OS_RcCallback(void const *argument)
 		{
 			HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 			__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
-      Judge_UpdateKeys();
+      		Judge_UpdateKeys();
 		}
 		Task_RC_Callback();
 		osDelay(15);

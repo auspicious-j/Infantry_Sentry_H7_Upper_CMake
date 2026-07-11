@@ -1,6 +1,5 @@
-infantry_sentry_h7_upper_cmake/timers.o: \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\timers.c \
-  D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stdlib.h \
+infantry_sentry_h7_upper_cmake/segger_sysview_freertos.o: \
+  ..\SystemView\SEGGER_SYSVIEW_FreeRTOS.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stddef.h \
   D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\stdint.h \
@@ -19,5 +18,4 @@ infantry_sentry_h7_upper_cmake/timers.o: \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\list.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\timers.h
+  D:\Program_Programing\MDK\Core\ARM\ARMCLANG\Bin\..\include\string.h

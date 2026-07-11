@@ -31,7 +31,7 @@ typedef enum
     GimbalCtrl_Control = 0,    //人控
     GimbalCtrl_AI,            //AI
 } Gimbal_CtrlMode_e;
-                 
+
 typedef enum
 {
     GimbalState_Rocker = 0,   //人控
