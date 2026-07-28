@@ -154,7 +154,8 @@ void Vision_ParseData(void)
 		vision.pitch = vision_receive.pitch;
 		vision.base_yaw = vision_receive.base_yaw;
 		vision.top_yaw = vision_receive.top_yaw;
-		vision.tracking = vision_receive.tracking;
+		// vision.tracking = vision_receive.tracking;
+		vision.tracking = 0;
 		vision.distance = vision_receive.distance;//视觉部分解包	
 	
 		vx=-vision_receive.linear_y*1000; //ai部分解包 同时转换坐标系 ai坐标系下向前为x 左右为y 电控坐标系下 左右为x 前后为y

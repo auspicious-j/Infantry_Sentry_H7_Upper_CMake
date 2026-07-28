@@ -455,9 +455,9 @@ void Gimbal_Fold_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType e
 void Task_Gimbal_Callback()
 {
 	#if Sentry_Mode
-	Gimbal_ModeCtrl();
+		Gimbal_ModeCtrl();
 	#endif
-	Gimbal_StateCtrl();
+		Gimbal_StateCtrl();
 	Gimbal_UpdatePID();
 	Gimbal_UpdateAngle();
 	switch(gimbal.state)

@@ -260,40 +260,37 @@ void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEven
 /*更新移动数据*/
 void Chassis_UpdateMove(void)
 {
-		float gimbalAngleSin=sin(chassis.rotate.relativeAngle*PI/180);
-		float gimbalAngleCos=cos(chassis.rotate.relativeAngle*PI/180);
-		switch(chassis.pattern)
-		{
+	float gimbalAngleSin=sin(chassis.rotate.relativeAngle*PI/180);
+	float gimbalAngleCos=cos(chassis.rotate.relativeAngle*PI/180);
+	switch(chassis.pattern)
+	{
 		case Chassis_AI:
-			chassis.move.vx = vx;
-			chassis.move.vy = vy;
-		break;
+			Slope_SetTarget(&chassis.move.xSlope,vx);
+			Slope_SetTarget(&chassis.move.ySlope,vy);
+			break;
 		case Chassis_control:
-			
-				Chassis_UpdateSlope();
-				if(chassis.rotate.mode == ChassisMode_Spin)
-				{
-						chassis.move.maxVx *= (chassis.rotate.ratio);
-						chassis.move.maxVy *= (chassis.rotate.ratio);
-				}
-
-				if (Rocker_Ctrl)
-				{
-						Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
-						Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
-				}
-				else 
-				{
-						Slope_SetTarget(&chassis.move.ySlope, chassis.move.maxVy * (chassis.key.key_w + chassis.key.key_s)); // ?????????
-						Slope_SetTarget(&chassis.move.xSlope, chassis.move.maxVx * (chassis.key.key_d + chassis.key.key_a)); // ?????????
-				}
-
-			chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
-			chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
+			Chassis_UpdateSlope();
+			if(chassis.rotate.mode == ChassisMode_Spin)
+			{
+				chassis.move.maxVx *= (chassis.rotate.ratio);
+				chassis.move.maxVy *= (chassis.rotate.ratio);
+			}
+			if (Rocker_Ctrl)
+			{
+				Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
+				Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
+			}
+			else 
+			{
+				Slope_SetTarget(&chassis.move.ySlope, chassis.move.maxVy * (chassis.key.key_w + chassis.key.key_s)); // ?????????
+				Slope_SetTarget(&chassis.move.xSlope, chassis.move.maxVx * (chassis.key.key_d + chassis.key.key_a)); // ?????????
+			}
 			break;
 		default:
 			break;
-		}
+	}
+	chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
+	chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
 }
 
 /*旋转状态机*/
