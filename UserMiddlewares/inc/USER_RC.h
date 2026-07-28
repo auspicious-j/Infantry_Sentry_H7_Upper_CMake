@@ -12,6 +12,7 @@
 #define KEY_NUM 18
 #define MAX_KEY_CALLBACK_NUM 10
 
+#define Sentry_Mode 1
 /*
  * Change USER_RC_TYPE to switch remote controller type.
  * Available values:

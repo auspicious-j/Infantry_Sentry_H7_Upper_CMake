@@ -100,14 +100,18 @@ void Chassis_ModeCtrl(void)
     switch(rcInfo.right)
     {
         case 3:
-            chassis.pattern = Chassis_control;
+            chassis.pattern = Chassis_AI;
             break;
-
+				case 1:
+				 chassis.pattern = Chassis_control;
         default:
             break;
     }
 	//不同控制模式下 不同状态机
-    switch(chassis.pattern)
+}
+void Chassis_StateCtrl()
+{
+	switch(chassis.pattern)
     {
         case Chassis_control: //人控模式
             if(Rocker_Ctrl == true){
@@ -133,6 +137,11 @@ void Chassis_ModeCtrl(void)
                 }
             }
             break;
+				case Chassis_AI:
+						if(vision_receive.spin_mode)//AI确定模式
+								chassis.rotate.mode = ChassisMode_Spin;
+						else
+								chassis.rotate.mode = ChassisMode_Follow;
         default:
             break;
     }
@@ -251,28 +260,40 @@ void Chassis_SwitchMode_KeyCallback(KeyType key, KeyCombineType combine, KeyEven
 /*更新移动数据*/
 void Chassis_UpdateMove(void)
 {
-	float gimbalAngleSin=sin(chassis.rotate.relativeAngle*PI/180);
-	float gimbalAngleCos=cos(chassis.rotate.relativeAngle*PI/180);
-    Chassis_UpdateSlope();
-    if(chassis.rotate.mode == ChassisMode_Spin)
-    {
-        chassis.move.maxVx *= (chassis.rotate.ratio);
-        chassis.move.maxVy *= (chassis.rotate.ratio);
-    }
+		float gimbalAngleSin=sin(chassis.rotate.relativeAngle*PI/180);
+		float gimbalAngleCos=cos(chassis.rotate.relativeAngle*PI/180);
+		switch(chassis.pattern)
+		{
+		case Chassis_AI:
+			chassis.move.vx = vx;
+			chassis.move.vy = vy;
+		break;
+		case Chassis_control:
+			
+				Chassis_UpdateSlope();
+				if(chassis.rotate.mode == ChassisMode_Spin)
+				{
+						chassis.move.maxVx *= (chassis.rotate.ratio);
+						chassis.move.maxVy *= (chassis.rotate.ratio);
+				}
 
-    if (Rocker_Ctrl)
-    {
-        Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
-        Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
-    }
-    else 
-    {
-        Slope_SetTarget(&chassis.move.ySlope, chassis.move.maxVy * (chassis.key.key_w + chassis.key.key_s)); // ?????????
-        Slope_SetTarget(&chassis.move.xSlope, chassis.move.maxVx * (chassis.key.key_d + chassis.key.key_a)); // ?????????
-    }
+				if (Rocker_Ctrl)
+				{
+						Slope_SetTarget(&chassis.move.xSlope,(float)rcInfo.ch3 * chassis.move.maxVx / 660);
+						Slope_SetTarget(&chassis.move.ySlope,(float)rcInfo.ch4 * chassis.move.maxVy / 660);
+				}
+				else 
+				{
+						Slope_SetTarget(&chassis.move.ySlope, chassis.move.maxVy * (chassis.key.key_w + chassis.key.key_s)); // ?????????
+						Slope_SetTarget(&chassis.move.xSlope, chassis.move.maxVx * (chassis.key.key_d + chassis.key.key_a)); // ?????????
+				}
 
-	chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
-	chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
+			chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
+			chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
+			break;
+		default:
+			break;
+		}
 }
 
 /*旋转状态机*/
@@ -283,29 +304,34 @@ static void Chassis_HandleFollow(void) //底盘跟随模式
     if(chassis.pattern == Chassis_control)
     {
         angle = chassis.rotate.relativeAngle;
-    }
-    if(angle >= 180)
-        angle -= 360;
-    if(angle < -180)
-        angle += 360;
-    float deadzone = 0.1f;
-    float pid_angle = 0.0f;
-    if (angle > deadzone)
-    {
-        pid_angle = angle - deadzone;
-    }
-    else if (angle < -deadzone)
-    {
-        pid_angle = angle + deadzone;
-    }
-    else
-    {
-        pid_angle = 0.0f;
-        chassis.rotate.pid.integral = 0.0f;
-    }
-    PID_SingleCalc(&chassis.rotate.pid, 0, -pid_angle);
-    chassis.move.vw = chassis.rotate.pid.output + chassis.move.spinSlope.value;
-    LIMIT(chassis.move.vw,-chassis.move.maxVw,chassis.move.maxVw);
+			if(angle >= 180)
+					angle -= 360;
+			if(angle < -180)
+					angle += 360;
+			float deadzone = 0.1f;
+			float pid_angle = 0.0f;
+			if (angle > deadzone)
+			{
+					pid_angle = angle - deadzone;
+			}
+			else if (angle < -deadzone)
+			{
+					pid_angle = angle + deadzone;
+			}
+			else
+			{
+					pid_angle = 0.0f;
+					chassis.rotate.pid.integral = 0.0f;
+			}
+			PID_SingleCalc(&chassis.rotate.pid, 0, -pid_angle);
+			chassis.move.vw = chassis.rotate.pid.output + chassis.move.spinSlope.value;
+			LIMIT(chassis.move.vw,-chassis.move.maxVw,chassis.move.maxVw);
+		}
+		else
+		{
+			chassis.move.vw = vw;
+			LIMIT(chassis.move.vw,-chassis.move.maxVw,chassis.move.maxVw);
+		}
 }
 
 static void Chassis_HandleSpin(void) //小陀螺模式
@@ -353,7 +379,10 @@ void Task_Chassis_Callback()
     //     chassis.move.fastMode = 0;
     // }
     Chassis_UpdateAngle(); //更新底盘云台之间关联角
-	Chassis_ModeCtrl();	//更新模式状态机
+	#if Sentry_Mode
+		Chassis_ModeCtrl();	//更新模式状态机
+	#endif
+	    Chassis_StateCtrl();
     switch(chassis.rotate.mode) //更新两种旋转模式状态机
     {
         case ChassisMode_Follow:

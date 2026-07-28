@@ -208,29 +208,35 @@ uint8_t shootflag = 0;
 // 摇杆控制
 void Shooter_RockerCtrl()
 {	
+	static int lastwheel = 0;
 	if(chassis.pattern==Chassis_control)
 	{
-		if(rcInfo.right == 1)
-			shooter.fricOpenFlag = 1;
-		else
-			shooter.fricOpenFlag = 0;
-
+		if(rcInfo.wheel>400&&lastwheel<=400)
+		{
+			if(shooter.fricOpenFlag)
+			{
+				shooter.fricOpenFlag=0;
+				shooter.fricMotor[0].targetSpeed = 0 ;
+				shooter.fricMotor[1].targetSpeed =0;
+			}
+			else
+			{
+				shooter.fricMotor[0].targetSpeed = -shooter.fricSpd ;
+				shooter.fricMotor[1].targetSpeed = shooter.fricSpd ;
+				shooter.fricOpenFlag=1;
+			
+			}
+		}
+		lastwheel = rcInfo.wheel;
+		
 		if(!gimbal.visionEnable)
 		{
-			if(rcInfo.left == 1 && shooter.fricOpenFlag)
+			if(rcInfo.left==1&&shooter.fricOpenFlag)
+			{
 				shooter.workState=TRIGGER_CONTINUE;
+			}
 			else	
 				shooter.workState=IDLE;
-		}
-		else
-		{
-			if (rcInfo.left == 1 && shooter.fricOpenFlag && shootflag == 0) 
-      {
-				shooter.workState = TRIGGER_CLICK;
-        shootflag = 1;
-      }
-      else if(rcInfo.left != 1)
-        shootflag = 0;
 		}
 	}
 }
