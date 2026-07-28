@@ -6,7 +6,6 @@
 #include "usart.h"
 #include "USER_B2B.h"
 #include "myQueue.h"
-#include <stdint.h>
 #define DISABLE_JUDGE_TASK
 
 /*****************系统数据定义**********************/
@@ -25,16 +24,15 @@ ext_shoot_data_t ShootData;							   // 0x0207
 ext_bullet_remaining_t BulletRemaining;				   // 0x0208
 ext_rfid_status_t RfidStatus;						   // 0x0209
 ext_dart_client_cmd_t DartClientCmd;				   // 0x020A
-ext_sentry_info_t SentryDecision;					   // 0x020D
+sentry_info_t    SentryDecision;			//0x20D
 
 
 xFrameHeader FrameHeader; // 发送帧头信息
 /****************************************************/
 
 JudgeData_t USER_JudgeData;
-USER_SentryCmd_t USER_SentryCmd; //哨兵机器人指令数据
-ext_CommunatianData_t USER_CommunatianData; //机器人交互信息数据帧
-ext_sentry_cmd_t SentryCmd; //哨兵机器人指令数据帧 发给裁判系统
+USER_SentryCmd_t USER_SentryCmd;
+
 
 bool Judge_Data_TF = FALSE; // 裁判数据是否可用,辅助函数调用
 
@@ -47,7 +45,6 @@ JudgeTxFrame judgeQueueBuf[JUDGE_QUEUE_SIZE];
 uint8_t usart1RxBuf[JUDGE_MAX_RX_LENGTH];
 
 uint16_t shootNum = 0; // 统计发弹量
-int transmitNum = 0; // 统计发送次数
 
 /**************裁判系统数据辅助****************/
 
@@ -182,21 +179,126 @@ bool JUDGE_Read_Data(uint8_t *ReadFromUsart)
 	return retval_tf; // 对数据正误做处理
 }
 
+ void USART1_dma_init()
+ {
+// 	LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);
+
+// 	// IT trans
+//	LL_USART_EnableIT_IDLE(USART1);
+// 	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_0, (uint32_t)usart1RxBuf);
+// 	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_0, sizeof(usart1RxBuf));
+// 	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_0, (uint32_t)&USART1->RDR);
+// 	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_0);
+// 	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_0);
+//  LL_USART_EnableDMAReq_RX(USART1);
+//  
+// 	// send
+// 	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)&USART1->TDR);
+// 	LL_USART_EnableDMAReq_TX(USART1);
+// 	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_1);
+ }
+
+
+void USER_USART1_IRQHandler(void)
+{
+//    if (LL_USART_IsActiveFlag_IDLE(USART1) && LL_USART_IsEnabledIT_IDLE(USART1))
+//    {
+//        LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_0);               
+////        int usart1RxLen=JUDGE_MAX_RX_LENGTH - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_0);
+//        // 解析串口数据       
+//                JUDGE_Read_Data(usart1RxBuf);
+////                judgedata_update();
+//                memset(usart1RxBuf,0,sizeof(usart1RxBuf));                         
+//                LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_0,JUDGE_MAX_RX_LENGTH);
+//                LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_0);
+//                LL_USART_ClearFlag_IDLE(USART1);     
+//    }
+}
+
+////串口1中断回调
+//void USER_USART1_IRQHandler()
+//{
+//	if (LL_USART_IsActiveFlag_IDLE(USART1) && LL_USART_IsEnabledIT_IDLE(USART1))
+//	{
+//		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_0);
+
+//		// 获取接收到的数据长度
+//		uint16_t rxLen = JUDGE_MAX_RX_LENGTH - LL_DMA_GetDataLength(DMA2, LL_DMA_STREAM_0);
+//		JUDGE_Read_Data(usart1RxBuf);
+//		
+//		memset(usart1RxBuf,0,sizeof(usart1RxBuf));
+//		LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_0, JUDGE_MAX_RX_LENGTH);
+//		LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_0);
+//		LL_USART_ClearFlag_IDLE(USART1);
+//		
+//		Detect_Update(DeviceID_Judge);
+//	}
+//}
+
+
+void USART1_DMA_Send(uint8_t *tx_buffer, uint16_t size)
+{
+//	while (LL_DMA_IsEnabledStream(DMA2, LL_DMA_STREAM_1) &&
+//		   !LL_DMA_IsActiveFlag_TC1(DMA2))
+//	{
+//		// 设置超时，避免死等
+//		static uint32_t timeout = 0;
+//		if (++timeout > 10000)
+//		{
+//			LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
+//			LL_DMA_ClearFlag_TC1(DMA2);
+//			timeout = 0;
+//			break;
+//		}
+//	}
+//	LL_DMA_ClearFlag_TC1(DMA2);
+//	LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_1);
+//	LL_DMA_ConfigTransfer(DMA2, LL_DMA_STREAM_1,
+//						  LL_DMA_DIRECTION_MEMORY_TO_PERIPH |
+//							  LL_DMA_MEMORY_INCREMENT |
+//							  LL_DMA_PERIPH_NOINCREMENT |
+//							  LL_DMA_PDATAALIGN_BYTE |
+//							  LL_DMA_MDATAALIGN_BYTE);
+//	LL_DMA_SetPeriphAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)&USART1->TDR);
+//	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_1, (uint32_t)tx_buffer);
+//	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_1, size);
+//	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_1);
+}
+
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
 // 裁判系统掉线回调函数
 void Judge_UartLostCallback()
 {
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart1,usart1RxBuf,sizeof(usart1RxBuf));
-	__HAL_DMA_DISABLE_IT(&hdma_usart1_rx , DMA_IT_HT);
+	
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart1,usart1RxBuf,sizeof(usart1RxBuf));
+		__HAL_DMA_DISABLE_IT(&hdma_usart1_rx , DMA_IT_HT);
+	
+//	LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_0);
+//	// 清除所有标志位
+//	LL_USART_ClearFlag_IDLE(USART1);
+//	LL_USART_ClearFlag_ORE(USART1);
+//	LL_USART_ClearFlag_FE(USART1);
+//	LL_USART_ClearFlag_NE(USART1);
+//	LL_USART_ClearFlag_PE(USART1);
+
+//	memset(usart1RxBuf, 0, sizeof(usart1RxBuf));
+//	Judge_Data_TF = FALSE;
+//	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_0, sizeof(usart1RxBuf));
+//	LL_DMA_SetMemoryAddress(DMA2, LL_DMA_STREAM_0, (uint32_t)usart1RxBuf);
+//	LL_USART_EnableIT_IDLE(USART1);
+//	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_0);
 }
 // 裁判系统初始化
 
 
 void JUDGE_Init()
-{	
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart1,usart1RxBuf,sizeof(usart1RxBuf));
-	__HAL_DMA_DISABLE_IT(&hdma_usart1_rx , DMA_IT_HT);
+{
+
+//	USART1_dma_init();
+
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart1,usart1RxBuf,sizeof(usart1RxBuf));
+		__HAL_DMA_DISABLE_IT(&hdma_usart1_rx , DMA_IT_HT);
 }
 
 
@@ -259,12 +361,11 @@ uint16_t JUDGE_GetHeatLimit()
 {
 	return GameRobotState.shooter_barrel_heat_limit;
 }
-
+// 获取当前枪管热量
 uint16_t JUDGE_GetNowHeat()
 {
 	return PowerHeatData.shooter_id1_17mm_cooling_heat;
 }
-
 // 获取射速限制
 uint16_t JUDGE_GetShootSpeedLimit()
 {
@@ -282,6 +383,7 @@ int16_t JUDGE_GetRemainHeat()
 {
 	return (int16_t)USER_JudgeData.shooter_barrel_heat_limit - (int16_t)USER_JudgeData.shooter_id1_17mm_cooling_heat;
 }
+
 // 剩余发弹数
 uint16_t JUDGE_GetRemain_17_Num()
 {
@@ -317,6 +419,7 @@ float JUDGE_GetInitial_speed()
 {
 	return ShootData.initial_speed;
 }
+
 //重置挨打的装甲板id
 void JUDGE_ResetHurtArmorID()
 {
@@ -354,12 +457,10 @@ uint16_t JUDGE_GetAllyBaseHP()
 void Judge_Receive()
 {
 	JUDGE_Read_Data(usart1RxBuf);
-//	memset(usart1RxBuf,0,sizeof(usart1RxBuf));
+	memset(usart1RxBuf,0,sizeof(usart1RxBuf));
 }
 
-
-
-void Judge_Receive_update()
+void Judge_update()
 {
 	USER_JudgeData.game_progress = GameState.game_progress;
 	USER_JudgeData.remain_time = GameState.stage_remain_time;
@@ -381,46 +482,50 @@ void Judge_Receive_update()
 	
 	// bit1 是否检测到堡垒
 	if (RfidStatus.rfid_status & (1 << 17))
-		USER_JudgeData.sentry_info_3 |= (1 << 1);
+			USER_JudgeData.sentry_info_3 |= (1 << 1);
 	else
-		USER_JudgeData.sentry_info_3 &= ~(1 << 1);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 1);
 
 	// bit2 是否检测到补给区（与兑换站不重叠）
 	if (RfidStatus.rfid_status & (1 << 19))
-		USER_JudgeData.sentry_info_3 |= (1 << 2);
+			USER_JudgeData.sentry_info_3 |= (1 << 2);
 	else
-		USER_JudgeData.sentry_info_3 &= ~(1 << 2);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 2);
 
 	// bit3 补给区（与兑换站重叠）
 	if (RfidStatus.rfid_status & (1 << 20))
-		USER_JudgeData.sentry_info_3 |= (1 << 3);
+			USER_JudgeData.sentry_info_3 |= (1 << 3);
 	else
-		USER_JudgeData.sentry_info_3 &= ~(1 << 3);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 3);
 
 	// bit4 能量 <30%
 	if (BuffMusk.remaining_energy != 0x80)
 	{
-		if (BuffMusk.remaining_energy & (1 << 3))
-			USER_JudgeData.sentry_info_3 &= ~(1 << 4);
-		else
-			USER_JudgeData.sentry_info_3 |= (1 << 4);
+			if (BuffMusk.remaining_energy & (1 << 3))
+					USER_JudgeData.sentry_info_3 &= ~(1 << 4);
+			else
+					USER_JudgeData.sentry_info_3 |= (1 << 4);
 	}
 	else
 	{
-		USER_JudgeData.sentry_info_3 &= ~(1 << 4);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 4);
 	}
 
 	// 对方前哨站增益点 bit5
 	if (RfidStatus.rfid_status & (1 << 18))
-		USER_JudgeData.sentry_info_3 |= (1 << 5);
+			USER_JudgeData.sentry_info_3 |= (1 << 5);
 	else
-		USER_JudgeData.sentry_info_3 &= ~(1 << 5);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 5);
 
 	// 对方堡垒增益点 bit6
 	if (RfidStatus.rfid_status & (1 << 24))
-		USER_JudgeData.sentry_info_3 |= (1 << 6);
+			USER_JudgeData.sentry_info_3 |= (1 << 6);
 	else
-		USER_JudgeData.sentry_info_3 &= ~(1 << 6);
+			USER_JudgeData.sentry_info_3 &= ~(1 << 6);
+
+	USER_JudgeData.ally_outpost_hp = JUDGE_GetAllyOutpostHP();
+	USER_JudgeData.ally_base_hp = JUDGE_GetAllyBaseHP();
+
 
 	USER_JudgeData.ally_outpost_hp = JUDGE_GetAllyOutpostHP();
 	USER_JudgeData.ally_base_hp = JUDGE_GetAllyBaseHP();
@@ -432,64 +537,18 @@ void Judge_Receive_update()
 	USER_JudgeData.power_management_shooter_output = JUDGE_GetShooterOutputState();
 	USER_JudgeData.initial_speed = JUDGE_GetInitial_speed();				 			//获取当前弹速
 	USER_JudgeData.self_color = JUDGE_GetSelfColor();
-
-}
-
-void Judge_Transmit_update()
-{
-	// 发送哨兵指令到裁判系统
-	memset(&USER_CommunatianData, 0, sizeof(USER_CommunatianData));
-	USER_CommunatianData.txFrameHeader.SOF = 0xA5;
-	USER_CommunatianData.txFrameHeader.DataLength = sizeof(USER_CommunatianData.interactData);
-	USER_CommunatianData.txFrameHeader.Seq = transmitNum;
-	USER_CommunatianData.CmdID = 0x0301;
-	USER_CommunatianData.interactData.data_cmd_id = 0x0120; // 哨兵机器人指令数据
-	USER_CommunatianData.interactData.send_ID = JUDGE_GetSelfID();
-	USER_CommunatianData.interactData.receiver_ID = 0x8080; // 0x8080为裁判系统ID
-	
-	SentryCmd_Pack(&USER_SentryCmd, &SentryCmd);
-	memcpy(USER_CommunatianData.interactData.data,&SentryCmd.sentry_cmd,sizeof(SentryCmd.sentry_cmd));
-	Append_CRC8_Check_Sum((uint8_t *)&USER_CommunatianData.txFrameHeader,sizeof(xFrameHeader));
-	Append_CRC16_Check_Sum((uint8_t *)&USER_CommunatianData,sizeof(USER_CommunatianData));
-	HAL_UART_Transmit_DMA(&huart1,(uint8_t *)&USER_CommunatianData,sizeof(USER_CommunatianData));
-	transmitNum++;
-}
-
-
-
-void SentryCmd_Pack(USER_SentryCmd_t *user_cmd, ext_sentry_cmd_t *SentryCmd)
-{
-    uint32_t cmd = 0;
-    /*bit0:哨兵机器人是否确认复活，0不确认复活 即使复活读条完成 1确认复活*/
-    cmd |= ((uint32_t)(1 & 0x01U)) << 0;
-
-    /*bit2~12:哨兵兑换的发弹量值*/
-    cmd |= ((uint32_t)(user_cmd->buy_projectile & 0x07FFU)) << 2;
-
-	/*bit13~16:哨兵远程兑换发弹量的请求次数*/
-	cmd |= ((uint32_t)(user_cmd->remote_buy_bullet & 0x0FU)) << 13;
-
-    /*bit17~20:哨兵远程兑换血量的请求次数*/
-    cmd |= ((uint32_t)(user_cmd->remote_buy_blood & 0x0FU)) << 17;
-
-    /*bit21~22:哨兵修改当前姿态指令 1 进攻姿态  2 防御姿态 3 移动姿态 */
-    cmd |= ((uint32_t)(user_cmd->sentry_mode & 0x03U)) << 21;
-
-    /*bit23:哨兵机器人是否确认使能机关进入正在激活状态*/
-	cmd |= ((uint32_t)((user_cmd->energy_activation != 0) ? 1U : 0U)) << 23;
-
-    SentryCmd->sentry_cmd = cmd;
 }
 
 /**********************freertos任务*********************************/
 // 裁判系统发送任务回调
 void Task_Judge_Callback()
 {
-	// if (Queue_IsEmpty(&judgeQueue))
-	// 	return;
-	// // 取队头的消息发送
-	// JudgeTxFrame *frame = (JudgeTxFrame *)Queue_Dequeue(&judgeQueue);
-	// HAL_UART_Transmit_DMA(&huart1,(uint8_t*)frame->data,frame->frameLength);
+//	if (Queue_IsEmpty(&judgeQueue))
+//		return;
+//	// 取队头的消息发送
+//	JudgeTxFrame *frame = (JudgeTxFrame *)Queue_Dequeue(&judgeQueue);
+////	USART1_DMA_Send((uint8_t *)frame->data, frame->frameLength);
+//	HAL_UART_Transmit_DMA(&huart1,(uint8_t*)frame->data,frame->frameLength);
 }
 
 
@@ -500,9 +559,8 @@ void OS_JudgeCallback(void const *argument)
 	osDelay(500);
 	for (;;)
 	{
-		Judge_Receive_update();
-		// Judge_Transmit_update();
-		// Task_Judge_Callback();
+		Judge_update();
+//		Task_Judge_Callback();
 		osDelay(100);
 	}
 }

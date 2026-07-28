@@ -10,12 +10,13 @@
 
 typedef enum
 {
-	ChassisMode_Follow,	  // 底盘跟随云台模式
-	ChassisMode_Spin,	  // 小陀螺模式
+	ChassisMode_Follow=0,	  // 底盘跟随云台模式
+	ChassisMode_Spin=1,	  // 小陀螺模式
 } Chassis_Mode_e;
 
 typedef enum{
-    Chassis_control,
+	Chassis_control,
+	Chassis_AI,
 }Chassis_Pattern_e;
 
 typedef struct _Chassis
@@ -65,6 +66,7 @@ typedef struct _Chassis
 	{
 		PID pid;				// 旋转PID，由relativeAngle计算底盘旋转速度
 		float relativeAngle;	// 云台与底盘的偏离角 单位度
+		float align_yaw; 		//ai传来云台与垂直起伏路段方向的角度 用于底盘与起伏路段对齐
 		float InitAngle;		// 云台与底盘对齐时的编码器度数 
 		int16_t InitpitchAngle; // 云台水平时编码器值
 		float nowAngle;		// 此时云台的编码器换算为°值

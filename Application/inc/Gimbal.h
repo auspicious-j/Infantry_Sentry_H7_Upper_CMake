@@ -9,7 +9,7 @@
 #include "PID.h"
 #include "Filter.h"
 
-#define TOP_YAW_OFFSET 2376   //此处校准小yaw 7869 2376 5115 3740 6444
+#define TOP_YAW_OFFSET 7869   //此处校准小yaw 7869 2376 5115 3740 6444
 #define INIT_YAW_ANGLE -28.0f   //此处校准大yaw
 #define TOP_PITCH_OFFSET 0.151818514f //此处校准pitch
 #define FOLD_PITCH_OFFSET -0.926492786f //此处校准fold_pitch 校准效果为 当fold_pitch竖直向上时 角度为90度-0.826492786 //目前无过0检测 需机械安装时避开0点
@@ -120,6 +120,7 @@ extern float visionFindAver;
 void Gimbal_Init(void);
 void Gimbal_RockerCtrl();
 void Gimbal_VisionCtrl();
+void Gimbal_VisionCtrl_Limit();
 void Gimbal_MouseCtrl();
 void Gimbal_ScanCtrl();
 void Gimbal_FoldCtrl();

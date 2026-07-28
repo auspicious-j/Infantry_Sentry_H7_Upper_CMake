@@ -20,7 +20,7 @@ RC_TypeDef rcInfo = {0};//统一接口
 uint8_t Usart1RxBuf[200]; //串口1缓冲区 图传链路
 Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标左右键)
 
-bool Rocker_Ctrl = false;
+bool Rocker_Ctrl = true;
 
 int rc_true_flag;
 
@@ -512,10 +512,13 @@ void Task_RC_Callback()
 {
 	// 更新按键状态
 	RC_UpdateKeys();
+	#if Sentry_Mode
+	#else
 	if (rcInfo.wheel > 600) // 遥控器拨轮切换摇杆控制还是鼠标控制
 		Rocker_Ctrl = true;
 	else if (rcInfo.wheel < -600)
 		Rocker_Ctrl = false;
+	#endif
 	/**********特殊情况处理*********************/
 	if (rcInfo.right == 2) // 遥控器右拨码开关向下，急停
 	{
