@@ -197,7 +197,7 @@ void Vision_DataTransmit(void);
 void Vision_DataUpdate(void);
 void Vision_Init(void);
 void Vision_ParseData(void);
-void Vision_RegisterEvents();
-void Vision_Change_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
+//void Vision_RegisterEvents();
+//void Vision_Change_KeyCallback(KeyType key, KeyCombineType combine, KeyEventType event);
 
 #endif

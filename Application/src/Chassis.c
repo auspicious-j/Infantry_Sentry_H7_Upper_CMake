@@ -102,8 +102,8 @@ void Chassis_ModeCtrl(void)
         case 3:
             chassis.pattern = Chassis_AI;
             break;
-				case 1:
-				 chassis.pattern = Chassis_control;
+		case 1:
+			chassis.pattern = Chassis_control;
         default:
             break;
     }
@@ -137,11 +137,11 @@ void Chassis_StateCtrl()
                 }
             }
             break;
-				case Chassis_AI:
-						if(vision_receive.spin_mode)//AI确定模式
-								chassis.rotate.mode = ChassisMode_Spin;
-						else
-								chassis.rotate.mode = ChassisMode_Follow;
+	case Chassis_AI:
+			if(vision_receive.spin_mode)//AI确定模式
+				chassis.rotate.mode = ChassisMode_Spin;
+			else
+				chassis.rotate.mode = ChassisMode_Follow;
         default:
             break;
     }
@@ -269,7 +269,6 @@ void Chassis_UpdateMove(void)
 			Slope_SetTarget(&chassis.move.ySlope,vy);
 			break;
 		case Chassis_control:
-			Chassis_UpdateSlope();
 			if(chassis.rotate.mode == ChassisMode_Spin)
 			{
 				chassis.move.maxVx *= (chassis.rotate.ratio);
@@ -289,6 +288,7 @@ void Chassis_UpdateMove(void)
 		default:
 			break;
 	}
+	Chassis_UpdateSlope();
 	chassis.move.vx=-(Slope_GetVal(&chassis.move.xSlope) * gimbalAngleCos + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleSin);
 	chassis.move.vy=(-Slope_GetVal(&chassis.move.xSlope) * gimbalAngleSin + Slope_GetVal(&chassis.move.ySlope) * gimbalAngleCos);
 }

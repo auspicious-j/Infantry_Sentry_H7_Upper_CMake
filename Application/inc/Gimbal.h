@@ -18,12 +18,12 @@
 #define MASS_G 9.81f
 
 #define TOP_PITCH_DIRECTION 1
-#define TOP_PITCH_MASS 1.237f
+#define TOP_PITCH_MASS 1.237f  // 顶部pitch重力
 #define TOP_PITCH_R 0.08587f   // pitch中心及其距离
 
 #define FOLD_PITCH_DIRECTION -1
-#define FOLD_PITCH_MASS 1.491f
-#define FOLD_PITCH_R 0.11104f    // fold_pitch中心及其距离
+#define FOLD_PITCH_MASS 1.491f    // 折叠pitch重力
+#define FOLD_PITCH_R 0.11104f     // fold_pitch中心及其距离
 
 
 typedef enum
