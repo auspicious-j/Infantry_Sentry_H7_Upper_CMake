@@ -83,28 +83,27 @@
 		MPC_DEPID_Init(&gimbal.top_yaw.imuPID_MPC.mpcdeOuter, 280, 0.5, 480, 100, 30000, 0.8, 0);
 	}
 
-	/*云台角度更新*/
+	/*云台角度更新*/	
 	void Gimbal_UpdateAngle()
-	{
+	{		
 		// static int16_t last_angle = 0;
 		// static int32_t total_angle = 0;
 		// static uint8_t init = 0;
-
 		gimbal.top_yaw.gyro = -INS.gyro[1];
 		gimbal.top_yaw.angle = INS.yaw;
-
 		// if(!init && detectList[DeviceID_TopYawMotor].isLost == 0)//当yaw不掉线且第一次进入
 		// {
 		// 	last_angle = gimbal.top_yawMotor.angle;
 		// 	total_angle = gimbal.top_yawMotor.angle;
 		// 	init = 1;
 		// }
-		// int16_t delta = gimbal.top_yawMotor.angle - last_angle; //加入过0检测
-		// if(delta > 4096)      delta -= 8192;
-		// else if(delta < -4096) delta += 8192;
-		// total_angle += delta;
-		// last_angle = gimbal.top_yawMotor.angle;
-		gimbal.base_yaw.angle = gimbal.top_yaw.angle - (/*total_angle*/ gimbal.top_yawMotor.angle - TOP_YAW_OFFSET) / 8192.0f * 360.0f; //得出大yaw的imu角度
+		int16_t yaw_delta_angle=gimbal.top_yawMotor.angle - TOP_YAW_OFFSET;
+		if(yaw_delta_angle>4096){
+			yaw_delta_angle-=8192;
+		}else if(yaw_delta_angle<-4096){
+			yaw_delta_angle+=8192;
+		}
+		gimbal.base_yaw.angle = gimbal.top_yaw.angle - yaw_delta_angle / 8192.0f * 360.0f; //得出大yaw的imu角度
 
 		gimbal.base_yaw.gyro = gimbal.base_yawMotor.para.vel;
 		gimbal.top_pitch.gyro = -INS.gyro[0];
@@ -156,9 +155,6 @@
 		else
 			dAngle = gimbal.top_yaw.angle - gimbal.top_yaw.lastAngle;
 		gimbal.top_yaw.totalAngle += dAngle;
-
-		
-
 		// target += round((total - target) / 360.0) * 360.0;
 		while (gimbal.top_yaw.targetAngle - gimbal.top_yaw.totalAngle >= 180 || gimbal.top_yaw.totalAngle - gimbal.top_yaw.targetAngle >= 180)
 		{
@@ -172,7 +168,7 @@
 			}
 		}
 		gimbal.top_yaw.lastAngle = gimbal.top_yaw.angle;
-		gimbal.base_yaw.totalAngle = gimbal.top_yaw.totalAngle - (/*total_angle*/gimbal.top_yawMotor.angle - TOP_YAW_OFFSET) / 8192.0f * 360.0f;
+		gimbal.base_yaw.totalAngle = gimbal.top_yaw.totalAngle - yaw_delta_angle / 8192.0f * 360.0f;
 		visionFindAver = Filter_AverCalc(&gimbal.visionFilter.find, vision.control);
 	}
 

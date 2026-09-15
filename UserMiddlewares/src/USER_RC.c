@@ -23,6 +23,7 @@ Key keyList[KEY_NUM];	 // 按键列表(包含所有可用键盘按键和鼠标�
 bool Rocker_Ctrl = false;
 
 int rc_true_flag;
+int img_true_flag;   // 图传失联计数
 
 Image_Trans_TypeDef itInfo = {0}; // 图传链路信息
 
@@ -273,7 +274,6 @@ void Image_Trans_Analysis(uint8_t *buff)
 {
 	
 	judge(buff);
-	
 	if(buff[0] == 0xA9 && buff[1] == 0x53)
 	{
 		if(Verify_CRC16_Check_Sum(buff,21))
@@ -319,6 +319,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 		B2B_Receive();
     Detect_Update(DeviceID_B2B);
 	}
+
 	if (huart == &huart5)
 	{
     Detect_Update(DeviceID_RC);
@@ -336,8 +337,10 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 		__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
 	}
-		if (huart == &huart1)
+
+	if (huart == &huart1)
 	{
+		img_true_flag = 0;
 		Image_Trans_Analysis(Usart1RxBuf);
 	}
 }
@@ -540,11 +543,26 @@ void OS_RcCallback(void const *argument)
 	for (;;)
 	{
 		rc_true_flag++;
+		img_true_flag++; 
 		if (rc_true_flag >= 100)//长时间未接收到遥控器 手动重新接收
 		{
 			HAL_UARTEx_ReceiveToIdle_DMA(&huart5, usart5RxBuf, sizeof(usart5RxBuf));
 			__HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
       		Judge_UpdateKeys();
+			if((rc_true_flag >= 150) && (img_true_flag >= 200))
+			{
+				disable_motor_mode(&hfdcan2,0x01,MIT_MODE);
+				HAL_Delay(10);
+				USER_CAN_SetMotorCurrent(&hfdcan1, 0x1FF, 0, 0, 0, 0);
+				HAL_Delay(10);
+				USER_CAN_SetMotorCurrent(&hfdcan1, 0x200, 0, 0, 0, 0); // 关断电机
+				HAL_Delay(10);
+				USER_CAN_SetMotorCurrent(&hfdcan2,0x1FF,0,0,0,0);//关断电机
+				STOPFLAG = 1;
+				B2B_Transmit();
+				rcInfo.right = 2; //无论最后收到的摇杆为什么，都变成2，防止错误任务里面的非2复位
+				osThreadResume(ErrorTaskHandle); // 恢复错误任务 饿死其他任务
+			}
 		}
 		Task_RC_Callback();
 		osDelay(15);
