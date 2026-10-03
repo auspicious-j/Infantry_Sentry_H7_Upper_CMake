@@ -120,6 +120,7 @@ typedef struct __attribute__((packed))
 //	uint32_t bullet_id; // 打出子弹时刻返回的子弹ID（目前没用上）
 //	uint16_t checksum ;
 	uint8_t header;
+	float motor3508_speed[4];
 	uint8_t detect_color;  // 0-red 1-blue
 	uint8_t mode;  //0为打装甲板 1为打符
 	
@@ -127,6 +128,7 @@ typedef struct __attribute__((packed))
 	float pitch;
 	float top_yaw;
 	float diff_yaw;//大小yaw之间相差角度
+	float diff_yaw_chassis;//大yaw和底盘相差角度
   	float diff_pitch;//大小yaw之间pitch差值
 	float motor3508_speed[4]; //底盘每个电机转速
 	float bullet_speed;

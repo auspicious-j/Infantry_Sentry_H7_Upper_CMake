@@ -102,6 +102,10 @@ void Vision_DataUpdate(void)
 //	
 //	Append_CRC16_Check_Sum((uint8_t *)&vision_transmit, sizeof(vision_transmit));
 	vision_transmit.header = 0x5A;
+	for(uint8_t i=0;i<4;i++ )
+	{
+		vision_transmit.motor3508_speed[i] = chassis.motors[i].speed;
+	}
 	vision_transmit.detect_color = !USER_JudgeData.self_color; // 打红0 打蓝1
 	vision_transmit.mode = 0; //0为打装甲板 1为打符
 	vision_transmit.top_yaw = gimbal.top_yaw.totalAngle;
@@ -109,10 +113,6 @@ void Vision_DataUpdate(void)
 	vision_transmit.roll = INS.roll;
 	vision_transmit.diff_yaw = (gimbal.top_yawMotor.angle - TOP_YAW_OFFSET) / 8192.0f * 360.0f;
   	vision_transmit.diff_pitch = (TOP_PITCH_OFFSET - gimbal.top_pitchMotor.para.pos) / (2 * PI) * 360.0f;
-	vision_transmit.motor3508_speed[0] = chassis.motors[0].speed;
-	vision_transmit.motor3508_speed[1] = chassis.motors[1].speed;
-	vision_transmit.motor3508_speed[2] = chassis.motors[2].speed;
-	vision_transmit.motor3508_speed[3] = chassis.motors[3].speed;
 	vision_transmit.bullet_speed = USER_JudgeData.initial_speed;
 	vision_transmit.robo_status = 0xFF;  /*receive_485.Judge_Data.robo_status;*/
 	memcpy(&vision_transmit.AI_Judge_data, &USER_JudgeData, sizeof(Judge_Data_e));
