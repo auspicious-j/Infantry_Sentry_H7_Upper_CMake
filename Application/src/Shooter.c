@@ -37,7 +37,7 @@ void Shooter_InitPID()
 {
 	Motor_StartCalcAngle(&shooter.triggerMotor);							 // 初始化电机角度累计
 	PID_Init(&shooter.triggerMotor.anglePID.inner,3.5,0,0,7800,10000);
-	PID_Init(&shooter.triggerMotor.anglePID.outer, 0.2,0,0.01, 0, 6000);
+	PID_Init(&shooter.triggerMotor.anglePID.outer, 0.8,0,0.01, 0, 6000);
 
 	PID_Init(&shooter.fricMotor[0].speedPID, 25, 0, 5, 0, 16000); // 摩擦轮
 	PID_Init(&shooter.fricMotor[1].speedPID, 25, 0, 5, 0, 16000);

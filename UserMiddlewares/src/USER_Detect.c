@@ -6,6 +6,7 @@
 #include "USER_B2B.h"
 
 uint32_t rs485_cnt = 0;
+uint32_t lost_count[16];
 
 /****内部函数声明****/
 // 默认掉线处理函数
@@ -105,6 +106,7 @@ void Task_Detect_Callback()
 					detectList[id].lostFunc();
 				// 更新标识
 				detectList[id].isLost = 1;
+				lost_count[id]++;
 			}
 			else if (presentTime - detectList[id].lastRecieveTime <= detectList[id].maxInterval)
 			{

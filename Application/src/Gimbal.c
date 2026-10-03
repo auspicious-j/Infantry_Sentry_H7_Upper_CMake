@@ -77,9 +77,9 @@ void Gimbal_InitPID()
 
 	PID_Init(&gimbal.base_yaw.imuPID.inner,5.8,0.02,3.5,1000,7000);
 	DEPID_Init(&gimbal.base_yaw.imuPID.deOuter,37,0.03,173,700,2000,0.45);	//串级pid
-	PID_Init(&gimbal.base_yaw.imuPID.outer,330,0.1,11000,1000,30000);//自己写位置环 mit速度环
+	PID_Init(&gimbal.base_yaw.imuPID.outer,300,0.1,11000,1000,30000);//自己写位置环 mit速度环//330,0.1
 	
-	PID_Init(&gimbal.top_yaw.imuPID.inner, 50, 0.1, 10, 7000, 30000);
+	PID_Init(&gimbal.top_yaw.imuPID.inner, 40, 0.1, 10, 7000, 30000);//50, 0.1, 10,
 	DEPID_Init(&gimbal.top_yaw.imuPID.deOuter, 270, 0.3, 300, 100, 30000, 0.7);//280, 0.5, 320//270 0.3  300
 	
 	MPC_PID_Init(&gimbal.top_yaw.imuPID_MPC.inner, 50, 0.1, 10, 7000, 30000, 0);
@@ -92,7 +92,7 @@ void Gimbal_UpdateAngle()
 	gimbal.top_yaw.gyro = -INS.gyro[1];
 	gimbal.top_yaw.angle = INS.yaw;
 
-	yaw_delta_angle=gimbal.top_yawMotor.angle - TOP_YAW_OFFSET;
+	yaw_delta_angle=gimbal.top_yawMotor.angle - TOP_YAW_OFFSET;//小yaw过零保护
 	if(yaw_delta_angle>4096){
 		yaw_delta_angle-=8192;
 	}else if(yaw_delta_angle<-4096){

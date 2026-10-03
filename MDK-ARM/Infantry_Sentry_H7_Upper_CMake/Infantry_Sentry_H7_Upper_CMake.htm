@@ -3,7 +3,7 @@
 <title>Static Call Graph - [Infantry_Sentry_H7_Upper_CMake\Infantry_Sentry_H7_Upper_CMake.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image Infantry_Sentry_H7_Upper_CMake\Infantry_Sentry_H7_Upper_CMake.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6230001: Last Updated: Sat Sep 19 16:17:12 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6230001: Last Updated: Sat Oct  3 23:21:53 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1072 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1193,8 +1193,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[261]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Task_Chassis_Callback
 </UL>
 
-<P><STRONG><a name="[137]"></a>Chassis_UpdateMove</STRONG> (Thumb, 588 bytes, Stack size 96 bytes, chassis.o(.text.Chassis_UpdateMove))
-<BR><BR>[Stack]<UL><LI>Max Depth = 280<LI>Call Chain = Chassis_UpdateMove &rArr; __hardfp_cos &rArr; __ieee754_rem_pio2 &rArr; fabs
+<P><STRONG><a name="[137]"></a>Chassis_UpdateMove</STRONG> (Thumb, 640 bytes, Stack size 112 bytes, chassis.o(.text.Chassis_UpdateMove))
+<BR><BR>[Stack]<UL><LI>Max Depth = 296<LI>Call Chain = Chassis_UpdateMove &rArr; __hardfp_cos &rArr; __ieee754_rem_pio2 &rArr; fabs
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Slope_GetVal
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Chassis_UpdateSlope
@@ -4026,7 +4026,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[261]"></a>Task_Chassis_Callback</STRONG> (Thumb, 678 bytes, Stack size 72 bytes, chassis.o(.text.Task_Chassis_Callback))
-<BR><BR>[Stack]<UL><LI>Max Depth = 352<LI>Call Chain = Task_Chassis_Callback &rArr; Chassis_UpdateMove &rArr; __hardfp_cos &rArr; __ieee754_rem_pio2 &rArr; fabs
+<BR><BR>[Stack]<UL><LI>Max Depth = 368<LI>Call Chain = Task_Chassis_Callback &rArr; Chassis_UpdateMove &rArr; __hardfp_cos &rArr; __ieee754_rem_pio2 &rArr; fabs
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PID_SingleCalc
 <LI><a href="#[137]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Chassis_UpdateMove
@@ -4048,7 +4048,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[d5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OS_MotorCallback
 </UL>
 
-<P><STRONG><a name="[262]"></a>Task_Detect_Callback</STRONG> (Thumb, 298 bytes, Stack size 16 bytes, user_detect.o(.text.Task_Detect_Callback))
+<P><STRONG><a name="[262]"></a>Task_Detect_Callback</STRONG> (Thumb, 320 bytes, Stack size 16 bytes, user_detect.o(.text.Task_Detect_Callback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 188<LI>Call Chain = Task_Detect_Callback &rArr; Detect_DefaultLostHandler &rArr; B2B_Init &rArr; HAL_UARTEx_ReceiveToIdle_DMA &rArr; UART_Start_Receive_DMA &rArr; HAL_DMA_Start_IT &rArr; DMA_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
