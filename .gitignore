@@ -1,3 +1,30 @@
-build
-mx.scratch
-!.settings
+# �������в㼶�µı����ļ���
+**/MDK-ARM/DebugConfig/
+**/MDK-ARM/LST/
+**/MDK-ARM/OBJ/
+**/MDK-ARM/RTE/
+
+# �������в㼶�µĿ��ļ� (������1000����ļ�����Դ)
+**/Drivers/
+
+# �������в㼶�µ���ʱ�ļ�
+**/*.o
+**/*.d
+**/*.crf
+**/*.htm
+**/*.map
+**/*.axf
+**/*.hex
+**/*.iex
+**/*.lnp
+**/*.lst
+**/*.bak
+**/*.dep
+**/*.uvgui.*
+**/*.uvguix.*
+**/*.uvoptx
+**/*.build_log.htm
+
+# ���� VS Code ��¼
+.vscode/
+.history/

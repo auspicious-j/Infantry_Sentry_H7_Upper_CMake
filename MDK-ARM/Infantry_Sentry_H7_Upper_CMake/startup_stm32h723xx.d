@@ -1,1 +1,0 @@
-infantry_sentry_h7_upper_cmake\startup_stm32h723xx.o: startup_stm32h723xx.s
